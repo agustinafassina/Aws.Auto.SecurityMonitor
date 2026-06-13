@@ -1,0 +1,131 @@
+<svg width="1440" height="1060" viewBox="0 0 1440 1060" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial, sans-serif">
+  <defs>
+    <style>
+      .title    { font-size: 32px; font-weight: 700; fill: #0f172a; }
+      .subtitle { font-size: 17px; font-weight: 500; fill: #475569; }
+      .step     { font-size: 16px; font-weight: 700; fill: #ffffff; }
+      .h        { font-size: 19px; font-weight: 700; fill: #0f172a; }
+      .t        { font-size: 14px; font-weight: 500; fill: #334155; }
+      .chip     { font-size: 14px; font-weight: 600; fill: #1e293b; }
+      .note     { font-size: 14px; font-weight: 600; fill: #1d4ed8; }
+    </style>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="8" refY="4" orient="auto">
+      <path d="M0,0 L0,8 L10,4 z" fill="#2563eb" />
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1440" height="1060" fill="#ffffff" />
+
+  <text x="720" y="56" text-anchor="middle" class="title">Scan Resources — Workflow</text>
+  <text x="720" y="88" text-anchor="middle" class="subtitle">Per-service scanner modules · batch containers · scheduled execution on AWS</text>
+
+  <!-- ===================== STEP 1: MODULES ===================== -->
+  <rect x="70" y="118" width="430" height="34" rx="8" fill="#0f172a" />
+  <text x="90" y="141" class="step">STEP 1 · Scanner modules (one folder per service)</text>
+
+  <rect x="70" y="166" width="1300" height="252" rx="16" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2" />
+
+  <!-- route53 module -->
+  <rect x="108" y="198" width="384" height="188" rx="12" fill="#ffffff" stroke="#2563eb" stroke-width="2.5" />
+  <text x="132" y="236" class="h">route53</text>
+  <rect x="132" y="250" width="336" height="32" rx="8" fill="#eef2ff" />
+  <text x="148" y="271" class="chip">scan_route53.py  ·  module entrypoint</text>
+  <rect x="132" y="292" width="336" height="32" rx="8" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.5" />
+  <text x="148" y="313" class="chip">Dockerfile  ·  batch image</text>
+  <rect x="132" y="334" width="336" height="32" rx="8" fill="#ecfdf5" />
+  <text x="148" y="355" class="chip">json-example/example.json</text>
+
+  <!-- rds module -->
+  <rect x="528" y="198" width="384" height="188" rx="12" fill="#ffffff" stroke="#2563eb" stroke-width="2.5" />
+  <text x="552" y="236" class="h">rds</text>
+  <rect x="552" y="250" width="336" height="32" rx="8" fill="#eef2ff" />
+  <text x="568" y="271" class="chip">scan_rds.py  ·  module entrypoint</text>
+  <rect x="552" y="292" width="336" height="32" rx="8" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.5" />
+  <text x="568" y="313" class="chip">Dockerfile  ·  batch image</text>
+  <rect x="552" y="334" width="336" height="32" rx="8" fill="#ecfdf5" />
+  <text x="568" y="355" class="chip">json-example/example.json</text>
+
+  <!-- future module -->
+  <rect x="948" y="198" width="384" height="188" rx="12" fill="#ffffff" stroke="#94a3b8" stroke-width="2.5" stroke-dasharray="8 6" />
+  <text x="972" y="236" class="h" fill="#64748b">&lt;next service&gt;</text>
+  <rect x="972" y="250" width="336" height="32" rx="8" fill="#f1f5f9" />
+  <text x="988" y="271" class="chip" fill="#64748b">scan_&lt;service&gt;.py</text>
+  <rect x="972" y="292" width="336" height="32" rx="8" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6 5" />
+  <text x="988" y="313" class="chip" fill="#64748b">Dockerfile</text>
+  <rect x="972" y="334" width="336" height="32" rx="8" fill="#f1f5f9" />
+  <text x="988" y="355" class="chip" fill="#64748b">json-example/example.json</text>
+
+  <text x="1140" y="180" text-anchor="middle" class="t" fill="#64748b">shared core: scanner_core.py</text>
+
+  <!-- arrow step1 -> step2 -->
+  <path d="M720 418 L720 476" stroke="#2563eb" stroke-width="3" fill="none" marker-end="url(#arrow)" />
+
+  <!-- ===================== STEP 2: RUN / SOURCE ===================== -->
+  <rect x="70" y="448" width="360" height="34" rx="8" fill="#0f172a" />
+  <text x="90" y="471" class="step">STEP 2 · Run scan &amp; pick data source</text>
+
+  <!-- decision -->
+  <rect x="560" y="500" width="320" height="68" rx="12" fill="#e2e8f0" stroke="#94a3b8" stroke-width="2" />
+  <text x="720" y="530" text-anchor="middle" class="h" font-size="16">--source</text>
+  <text x="720" y="552" text-anchor="middle" class="t">auto  |  aws  |  file</text>
+
+  <!-- aws source -->
+  <rect x="108" y="498" width="392" height="92" rx="12" fill="#fef3c7" stroke="#f59e0b" stroke-width="2" />
+  <text x="132" y="532" class="h">AWS discovery</text>
+  <text x="132" y="558" class="t">boto3 + IAM role credentials</text>
+  <text x="132" y="578" class="t">no API keys required</text>
+
+  <!-- local source -->
+  <rect x="940" y="498" width="392" height="92" rx="12" fill="#dcfce7" stroke="#22c55e" stroke-width="2" />
+  <text x="964" y="532" class="h">Local fallback</text>
+  <text x="964" y="558" class="t">json-example/example.json</text>
+  <text x="964" y="578" class="t">used by 'file' (and 'auto' on failure)</text>
+
+  <!-- run_scan merge -->
+  <rect x="560" y="616" width="320" height="68" rx="12" fill="#ffffff" stroke="#475569" stroke-width="2" />
+  <text x="720" y="646" text-anchor="middle" class="h" font-size="16">scanner_core.run_scan()</text>
+  <text x="720" y="668" text-anchor="middle" class="t">structured JSON results</text>
+
+  <path d="M500 544 L560 534" stroke="#2563eb" stroke-width="3" fill="none" marker-end="url(#arrow)" />
+  <path d="M940 544 L880 534" stroke="#2563eb" stroke-width="3" fill="none" marker-end="url(#arrow)" />
+  <path d="M720 568 L720 616" stroke="#2563eb" stroke-width="3" fill="none" marker-end="url(#arrow)" />
+
+  <!-- arrow step2 -> step3 -->
+  <path d="M720 684 L720 742" stroke="#2563eb" stroke-width="3" fill="none" marker-end="url(#arrow)" />
+
+  <!-- ===================== STEP 3: DEPLOY & SCHEDULE ===================== -->
+  <rect x="70" y="714" width="470" height="34" rx="8" fill="#0f172a" />
+  <text x="90" y="737" class="step">STEP 3 · Deploy &amp; run on schedule (Terraform)</text>
+
+  <!-- eventbridge -->
+  <rect x="520" y="766" width="320" height="70" rx="12" fill="#ede9fe" stroke="#7c3aed" stroke-width="2" />
+  <text x="680" y="796" text-anchor="middle" class="h" font-size="16">EventBridge schedule</text>
+  <text x="680" y="818" text-anchor="middle" class="t">rate / cron  ·  daily | weekly</text>
+
+  <path d="M680 836 L680 884" stroke="#2563eb" stroke-width="3" fill="none" marker-end="url(#arrow)" />
+
+  <!-- pipeline row -->
+  <rect x="88" y="884" width="210" height="92" rx="12" fill="#e0f2fe" stroke="#0284c7" stroke-width="2" />
+  <text x="193" y="922" text-anchor="middle" class="h" font-size="17">Docker image</text>
+  <text x="193" y="946" text-anchor="middle" class="t">built from module</text>
+
+  <rect x="338" y="884" width="172" height="92" rx="12" fill="#f8fafc" stroke="#64748b" stroke-width="2" />
+  <text x="424" y="922" text-anchor="middle" class="h" font-size="17">ECR</text>
+  <text x="424" y="946" text-anchor="middle" class="t">image registry</text>
+
+  <rect x="560" y="884" width="240" height="92" rx="12" fill="#f8fafc" stroke="#64748b" stroke-width="2" />
+  <text x="680" y="922" text-anchor="middle" class="h" font-size="17">ECS Fargate task</text>
+  <text x="680" y="946" text-anchor="middle" class="t">one task per scanner</text>
+
+  <rect x="850" y="884" width="300" height="92" rx="12" fill="#f8fafc" stroke="#64748b" stroke-width="2" />
+  <text x="1000" y="922" text-anchor="middle" class="h" font-size="17">CloudWatch</text>
+  <text x="1000" y="946" text-anchor="middle" class="t">logs + FailedInvocations alarms</text>
+
+  <path d="M298 930 L338 930" stroke="#2563eb" stroke-width="3" fill="none" marker-end="url(#arrow)" />
+  <path d="M510 930 L560 930" stroke="#2563eb" stroke-width="3" fill="none" marker-end="url(#arrow)" />
+  <path d="M800 930 L850 930" stroke="#2563eb" stroke-width="3" fill="none" marker-end="url(#arrow)" />
+
+  <!-- footer note -->
+  <rect x="70" y="1006" width="1300" height="40" rx="10" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.5" />
+  <text x="720" y="1031" text-anchor="middle" class="note">Scale out: add scan-resources/&lt;service&gt;/ (scan_&lt;service&gt;.py + Dockerfile + example.json) and a scanner_jobs entry — ECR · ECS · EventBridge · CloudWatch are created automatically</text>
+</svg>
