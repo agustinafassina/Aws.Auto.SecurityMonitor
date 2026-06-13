@@ -1,0 +1,117 @@
+<svg width="1440" height="980" viewBox="0 0 1440 980" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial, sans-serif">
+  <defs>
+    <style>
+      .title    { font-size: 32px; font-weight: 700; fill: #0f172a; }
+      .subtitle { font-size: 17px; font-weight: 500; fill: #475569; }
+      .step     { font-size: 16px; font-weight: 700; fill: #ffffff; }
+      .h        { font-size: 18px; font-weight: 700; fill: #0f172a; }
+      .t        { font-size: 14px; font-weight: 500; fill: #334155; }
+      .chip     { font-size: 14px; font-weight: 700; fill: #1e293b; }
+      .lane     { font-size: 17px; font-weight: 700; fill: #0f172a; }
+      .note     { font-size: 14px; font-weight: 600; fill: #1d4ed8; }
+    </style>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="8" refY="4" orient="auto">
+      <path d="M0,0 L0,8 L10,4 z" fill="#2563eb" />
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1440" height="980" fill="#ffffff" />
+
+  <text x="720" y="54" text-anchor="middle" class="title">Terraform Infrastructure - Workflow</text>
+  <text x="720" y="86" text-anchor="middle" class="subtitle">Multiple scanners on ECS Fargate, each service has its own schedule (daily | weekly | monthly)</text>
+
+  <!-- SHARED INFRA -->
+  <rect x="70" y="116" width="360" height="34" rx="8" fill="#0f172a" />
+  <text x="90" y="139" class="step">Provisioned by Terraform (shared)</text>
+
+  <rect x="70" y="162" width="1300" height="118" rx="16" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2" />
+
+  <rect x="100" y="184" width="290" height="74" rx="12" fill="#ede9fe" stroke="#7c3aed" stroke-width="2" />
+  <text x="245" y="216" text-anchor="middle" class="h">Terraform</text>
+  <text x="245" y="240" text-anchor="middle" class="t">for_each over scanner_jobs</text>
+
+  <rect x="415" y="184" width="290" height="74" rx="12" fill="#e0f2fe" stroke="#0284c7" stroke-width="2" />
+  <text x="560" y="216" text-anchor="middle" class="h">ECR</text>
+  <text x="560" y="240" text-anchor="middle" class="t">one repo per scanner</text>
+
+  <rect x="730" y="184" width="290" height="74" rx="12" fill="#fef3c7" stroke="#f59e0b" stroke-width="2" />
+  <text x="875" y="216" text-anchor="middle" class="h">IAM roles</text>
+  <text x="875" y="240" text-anchor="middle" class="t">task exec, task, events</text>
+
+  <rect x="1045" y="184" width="290" height="74" rx="12" fill="#dcfce7" stroke="#22c55e" stroke-width="2" />
+  <text x="1190" y="216" text-anchor="middle" class="h">ECS Fargate cluster</text>
+  <text x="1190" y="240" text-anchor="middle" class="t">shared by all tasks</text>
+
+  <path d="M720 280 L720 332" stroke="#2563eb" stroke-width="3" fill="none" marker-end="url(#arrow)" />
+
+  <!-- PER-SERVICE LANES -->
+  <rect x="70" y="320" width="560" height="34" rx="8" fill="#0f172a" />
+  <text x="90" y="343" class="step">Per-service tasks - independent recurrence</text>
+
+  <rect x="70" y="366" width="1300" height="500" rx="16" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="2" />
+
+  <text x="285" y="402" text-anchor="middle" class="t" fill="#64748b">EventBridge rule (schedule)</text>
+  <text x="720" y="402" text-anchor="middle" class="t" fill="#64748b">ECS Fargate task (ECR image)</text>
+  <text x="1150" y="402" text-anchor="middle" class="t" fill="#64748b">CloudWatch</text>
+
+  <!-- Lane 1: route53 daily -->
+  <rect x="100" y="420" width="370" height="110" rx="12" fill="#ffffff" stroke="#2563eb" stroke-width="2.5" />
+  <text x="124" y="456" class="lane">route53</text>
+  <rect x="124" y="470" width="210" height="34" rx="17" fill="#dcfce7" stroke="#22c55e" stroke-width="1.5" />
+  <text x="229" y="492" text-anchor="middle" class="chip">DAILY: rate(1 day)</text>
+
+  <rect x="535" y="420" width="370" height="110" rx="12" fill="#ffffff" stroke="#64748b" stroke-width="2" />
+  <text x="559" y="456" class="h">ECS task: route53</text>
+  <text x="559" y="486" class="t">image: ECR/route53, --source aws</text>
+  <text x="559" y="510" class="t">boto3 + task IAM role</text>
+
+  <rect x="970" y="420" width="340" height="110" rx="12" fill="#ffffff" stroke="#64748b" stroke-width="2" />
+  <text x="994" y="456" class="h">CloudWatch</text>
+  <text x="994" y="486" class="t">log group + alarm</text>
+  <text x="994" y="510" class="t">FailedInvocations</text>
+
+  <path d="M470 475 L535 475" stroke="#2563eb" stroke-width="3" fill="none" marker-end="url(#arrow)" />
+  <path d="M905 475 L970 475" stroke="#2563eb" stroke-width="3" fill="none" marker-end="url(#arrow)" />
+
+  <!-- Lane 2: rds weekly -->
+  <rect x="100" y="556" width="370" height="110" rx="12" fill="#ffffff" stroke="#2563eb" stroke-width="2.5" />
+  <text x="124" y="592" class="lane">rds</text>
+  <rect x="124" y="606" width="230" height="34" rx="17" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5" />
+  <text x="239" y="628" text-anchor="middle" class="chip">WEEKLY: rate(7 days)</text>
+
+  <rect x="535" y="556" width="370" height="110" rx="12" fill="#ffffff" stroke="#64748b" stroke-width="2" />
+  <text x="559" y="592" class="h">ECS task: rds</text>
+  <text x="559" y="622" class="t">image: ECR/rds, --source aws</text>
+  <text x="559" y="646" class="t">boto3 + task IAM role</text>
+
+  <rect x="970" y="556" width="340" height="110" rx="12" fill="#ffffff" stroke="#64748b" stroke-width="2" />
+  <text x="994" y="592" class="h">CloudWatch</text>
+  <text x="994" y="622" class="t">log group + alarm</text>
+  <text x="994" y="646" class="t">FailedInvocations</text>
+
+  <path d="M470 611 L535 611" stroke="#2563eb" stroke-width="3" fill="none" marker-end="url(#arrow)" />
+  <path d="M905 611 L970 611" stroke="#2563eb" stroke-width="3" fill="none" marker-end="url(#arrow)" />
+
+  <!-- Lane 3: next service monthly -->
+  <rect x="100" y="692" width="370" height="110" rx="12" fill="#ffffff" stroke="#94a3b8" stroke-width="2.5" stroke-dasharray="8 6" />
+  <text x="124" y="728" class="lane" fill="#64748b">&lt;next service&gt;</text>
+  <rect x="124" y="742" width="250" height="34" rx="17" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.5" />
+  <text x="249" y="764" text-anchor="middle" class="chip" fill="#4c1d95">MONTHLY: cron(...)</text>
+
+  <rect x="535" y="692" width="370" height="110" rx="12" fill="#ffffff" stroke="#94a3b8" stroke-width="2" stroke-dasharray="8 6" />
+  <text x="559" y="728" class="h" fill="#64748b">ECS task: &lt;service&gt;</text>
+  <text x="559" y="758" class="t" fill="#64748b">image: ECR/&lt;service&gt;</text>
+  <text x="559" y="782" class="t" fill="#64748b">added via scanner_jobs</text>
+
+  <rect x="970" y="692" width="340" height="110" rx="12" fill="#ffffff" stroke="#94a3b8" stroke-width="2" stroke-dasharray="8 6" />
+  <text x="994" y="728" class="h" fill="#64748b">CloudWatch</text>
+  <text x="994" y="758" class="t" fill="#64748b">log group + alarm</text>
+  <text x="994" y="782" class="t" fill="#64748b">created automatically</text>
+
+  <path d="M470 747 L535 747" stroke="#94a3b8" stroke-width="3" fill="none" marker-end="url(#arrow)" />
+  <path d="M905 747 L970 747" stroke="#94a3b8" stroke-width="3" fill="none" marker-end="url(#arrow)" />
+
+  <!-- footer note -->
+  <rect x="70" y="900" width="1300" height="44" rx="10" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.5" />
+  <text x="720" y="927" text-anchor="middle" class="note">Each scanner_jobs entry sets its own schedule_expression: add a service and its cadence (daily/weekly/monthly) without touching the others</text>
+</svg>

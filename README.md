@@ -1,6 +1,11 @@
 # 📘 AWS Auto Security Monitor
 Scalable baseline to scan AWS resources with containerized Python jobs and recurring execution on AWS.
 
+## 🗺️ Workflow
+High-level overview of how the two sections connect. See each section README for the detailed diagrams.
+
+![AWS Auto Security Monitor Workflow](./workflow.svg)
+
 ## 🧱 Repository Structure
 - `scan-resources`: scanner modules (one module per AWS service), local execution, and Docker batch images.
 - `terraform-infrastructure`: AWS infrastructure with ECS, ECR, EventBridge, CloudWatch, and IAM.

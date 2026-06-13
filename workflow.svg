@@ -1,0 +1,76 @@
+<svg width="1440" height="620" viewBox="0 0 1440 620" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial, sans-serif">
+  <defs>
+    <style>
+      .title    { font-size: 32px; font-weight: 700; fill: #0f172a; }
+      .subtitle { font-size: 17px; font-weight: 500; fill: #475569; }
+      .panel-h  { font-size: 20px; font-weight: 700; fill: #0f172a; }
+      .h        { font-size: 17px; font-weight: 700; fill: #0f172a; }
+      .t        { font-size: 14px; font-weight: 500; fill: #334155; }
+      .ref      { font-size: 13px; font-weight: 600; fill: #1d4ed8; }
+      .flow     { font-size: 13px; font-weight: 700; fill: #1d4ed8; }
+    </style>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="8" refY="4" orient="auto">
+      <path d="M0,0 L0,8 L10,4 z" fill="#2563eb" />
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1440" height="620" fill="#ffffff" />
+
+  <text x="720" y="54" text-anchor="middle" class="title">AWS Auto Security Monitor - Overview</text>
+  <text x="720" y="86" text-anchor="middle" class="subtitle">High-level flow across the two repository sections (see each section README for details)</text>
+
+  <!-- ===================== SECTION A: scan-resources ===================== -->
+  <rect x="60" y="130" width="610" height="380" rx="18" fill="#f8fafc" stroke="#2563eb" stroke-width="2.5" />
+  <text x="90" y="172" class="panel-h">scan-resources (build)</text>
+  <text x="90" y="198" class="ref">details: scan-resources/README.md</text>
+
+  <rect x="96" y="222" width="538" height="120" rx="12" fill="#ffffff" stroke="#64748b" stroke-width="2" />
+  <text x="120" y="256" class="h">Scanner modules (per service)</text>
+  <text x="120" y="284" class="t">route53, rds, &lt;next service&gt;</text>
+  <text x="120" y="308" class="t">scan_&lt;service&gt;.py + json-example + shared scanner_core.py</text>
+  <text x="120" y="330" class="t">source: --source aws | file | auto (boto3, no keys)</text>
+
+  <rect x="96" y="366" width="538" height="104" rx="12" fill="#e0f2fe" stroke="#0284c7" stroke-width="2" />
+  <text x="120" y="400" class="h">Docker batch image (per module)</text>
+  <text x="120" y="428" class="t">one Dockerfile per scanner, run-once and exit</text>
+  <text x="120" y="452" class="t">built and pushed to ECR</text>
+
+  <path d="M365 342 L365 366" stroke="#2563eb" stroke-width="3" fill="none" marker-end="url(#arrow)" />
+
+  <!-- ===================== bridge arrow ===================== -->
+  <path d="M670 318 L770 318" stroke="#2563eb" stroke-width="3.5" fill="none" marker-end="url(#arrow)" />
+  <text x="720" y="306" text-anchor="middle" class="flow">push image</text>
+
+  <!-- ===================== SECTION B: terraform-infrastructure ===================== -->
+  <rect x="770" y="130" width="610" height="380" rx="18" fill="#f8fafc" stroke="#7c3aed" stroke-width="2.5" />
+  <text x="800" y="172" class="panel-h">terraform-infrastructure (deploy and run)</text>
+  <text x="800" y="198" class="ref">details: terraform-infrastructure/README.md</text>
+
+  <rect x="806" y="222" width="250" height="80" rx="12" fill="#e0f2fe" stroke="#0284c7" stroke-width="2" />
+  <text x="931" y="256" text-anchor="middle" class="h">ECR</text>
+  <text x="931" y="282" text-anchor="middle" class="t">image registry</text>
+
+  <rect x="1094" y="222" width="250" height="80" rx="12" fill="#dcfce7" stroke="#22c55e" stroke-width="2" />
+  <text x="1219" y="256" text-anchor="middle" class="h">ECS Fargate</text>
+  <text x="1219" y="282" text-anchor="middle" class="t">task per scanner</text>
+
+  <rect x="806" y="346" width="250" height="80" rx="12" fill="#ede9fe" stroke="#7c3aed" stroke-width="2" />
+  <text x="931" y="380" text-anchor="middle" class="h">EventBridge</text>
+  <text x="931" y="406" text-anchor="middle" class="t">per-service schedule</text>
+
+  <rect x="1094" y="346" width="250" height="80" rx="12" fill="#fff7ed" stroke="#f59e0b" stroke-width="2" />
+  <text x="1219" y="380" text-anchor="middle" class="h">CloudWatch</text>
+  <text x="1219" y="406" text-anchor="middle" class="t">logs + alarms</text>
+
+  <rect x="806" y="450" width="538" height="40" rx="10" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5" />
+  <text x="1075" y="475" text-anchor="middle" class="t">IAM roles (task exec, task, events) + VPC / subnets</text>
+
+  <path d="M1056 262 L1094 262" stroke="#2563eb" stroke-width="3" fill="none" marker-end="url(#arrow)" />
+  <path d="M931 302 L931 346" stroke="#2563eb" stroke-width="3" fill="none" marker-end="url(#arrow)" />
+  <path d="M1056 386 L1094 386" stroke="#2563eb" stroke-width="3" fill="none" marker-end="url(#arrow)" />
+  <path d="M1219 302 L1219 346" stroke="#2563eb" stroke-width="3" fill="none" marker-end="url(#arrow)" />
+
+  <!-- footer note -->
+  <rect x="60" y="540" width="1320" height="44" rx="10" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.5" />
+  <text x="720" y="567" text-anchor="middle" class="ref">Scale out: add a scan-resources/&lt;service&gt; module and a scanner_jobs entry; Terraform creates ECR, ECS, EventBridge and CloudWatch automatically</text>
+</svg>
