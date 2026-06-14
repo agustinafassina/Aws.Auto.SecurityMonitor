@@ -53,3 +53,11 @@ To add a new scanner container, add a new entry in `scanner_jobs`; Terraform wil
 - The ECS tasks are configured to run with `--source aws`.
 - Credentials are resolved by AWS SDK (`boto3`) through task role (no API keys).
 - If `vpc_id`/`subnet_ids` are not defined, Terraform uses the default VPC and its subnets.
+
+## 🔔 Notifications
+- Set `alarm_notification_emails` in `terraform.tfvars` to enable alerting.
+- When non-empty, Terraform creates an SNS topic and subscribes each email (each recipient must confirm the subscription email).
+- Notifications are sent when:
+  - an ECS task fails to start (`stopCode = TaskFailedToStart`), and
+  - the per-scanner `FailedInvocations` CloudWatch alarm triggers.
+- Alternatively, set `alarm_sns_topic_arn` to reuse a pre-existing topic (ignored when emails are provided).

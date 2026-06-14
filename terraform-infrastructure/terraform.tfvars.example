@@ -1,0 +1,43 @@
+aws_region   = "sa-east-1"
+project_name = "security-scan"
+project_tag  = "costs tag"
+environment  = "dev"
+
+# Optional: if omitted, Terraform uses default VPC and all its subnets.
+# vpc_id     = "vpc-0123456789abcdef0"
+# subnet_ids = ["subnet-aaa", "subnet-bbb"]
+
+assign_public_ip = true
+
+# Emails notified when a scanner task fails to start or alarms trigger.
+# When non-empty, an SNS topic is created and each email is subscribed (confirm the subscription via email).
+alarm_notification_emails = [
+  "security-team@example.com",
+  "oncall@example.com",
+]
+
+# Optional: use a pre-existing SNS topic instead of creating one (ignored when alarm_notification_emails is set).
+# alarm_sns_topic_arn = "arn:aws:sns:us-east-1:123456789012:scanner-alerts"
+
+scanner_jobs = {
+  route53 = {
+    schedule_expression = "rate(1 day)"
+    cpu                 = 256
+    memory              = 512
+    command             = ["--source", "aws"]
+    image_tag           = "latest"
+    enabled             = true
+  }
+  rds = {
+    schedule_expression = "rate(1 day)"
+    cpu                 = 256
+    memory              = 512
+    command             = ["--source", "aws"]
+    image_tag           = "latest"
+    enabled             = true
+  }
+}
+
+tags = {
+  Team = "security"
+}
