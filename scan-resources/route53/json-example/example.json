@@ -1,0 +1,20 @@
+{
+  "resources": [
+    {
+      "id": "hosted-zone-example",
+      "type": "hosted_zone",
+      "checks": ["dnssec_enabled", "query_logging_enabled"],
+      "private_zone": false,
+      "dnssec_enabled": true,
+      "query_logging_enabled": false
+    },
+    {
+      "id": "hosted-zone-internal",
+      "type": "hosted_zone",
+      "checks": ["dnssec_enabled", "query_logging_enabled"],
+      "private_zone": true,
+      "dnssec_enabled": false,
+      "query_logging_enabled": false
+    }
+  ]
+}

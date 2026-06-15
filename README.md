@@ -16,6 +16,8 @@ Use the module-specific documentation to run commands and deploy:
 - `scan-resources/README.md` for scanner execution, Docker usage, and module creation.
 - `terraform-infrastructure/README.md` for Terraform provisioning and infrastructure operations.
 
+> Prerequisite: Terraform state is stored on S3. Create the state bucket (versioning + encryption) and set its name in `terraform-infrastructure/backend.tf` before running `terraform init`. See the Remote State section in `terraform-infrastructure/README.md`.
+
 ## 📈 Scaling Model
 This project is designed to grow by adding new scanner modules:
 
@@ -33,3 +35,5 @@ This project is designed to grow by adding new scanner modules:
 ## 📝 Notes
 - Scanner scripts support `--source aws|file|auto`.
 - AWS discovery uses `boto3` and IAM roles (no API keys).
+
+REVISAR LA NOMENCLATURA DE TODOS LOS NOMBRES DE LOS SERVICIOS Y RECURSOS EN AWS

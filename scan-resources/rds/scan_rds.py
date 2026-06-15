@@ -2,17 +2,60 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 from typing import Any
+
+# --- S3 findings persistence (override via env in ECS) ---
+# Local: leave bucket empty to skip upload, or set e.g. "tf-dev-security-scan-findings"
+FINDINGS_S3_BUCKET = os.environ.get("FINDINGS_S3_BUCKET", "")
+FINDINGS_S3_PREFIX = os.environ.get("FINDINGS_S3_PREFIX", "findings/rds")
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 if str(ROOT_DIR) not in sys.path:
     sys.path.append(str(ROOT_DIR))
 
-from scanner_core import ResourceScannerConfig, load_resources, run_scan
+from scanner_core import (
+    Check,
+    ResourceScannerConfig,
+    load_resources,
+    persist_findings_to_s3,
+    run_scan,
+)
 
 DEFAULT_RESOURCES_FILE = Path(__file__).resolve().parent / "json-example" / "example.json"
+
+MIN_BACKUP_RETENTION_DAYS = 7
+
+
+def _check_storage_encrypted(resource: dict[str, Any]) -> tuple[bool, str]:
+    enabled = bool(resource.get("storage_encrypted"))
+    return enabled, "storage encryption enabled" if enabled else "storage is not encrypted"
+
+
+def _check_backup_retention(resource: dict[str, Any]) -> tuple[bool, str]:
+    days = resource.get("backup_retention_period") or 0
+    ok = days >= MIN_BACKUP_RETENTION_DAYS
+    return ok, f"backup retention = {days} day(s) (min {MIN_BACKUP_RETENTION_DAYS})"
+
+
+def _check_deletion_protection(resource: dict[str, Any]) -> tuple[bool, str]:
+    enabled = bool(resource.get("deletion_protection"))
+    return enabled, "deletion protection enabled" if enabled else "deletion protection disabled"
+
+
+def _check_iam_authentication(resource: dict[str, Any]) -> tuple[bool, str]:
+    enabled = bool(resource.get("iam_authentication"))
+    return enabled, "IAM authentication enabled" if enabled else "IAM authentication disabled"
+
+
+CHECKS: dict[str, Check] = {
+    "storage_encrypted": Check("high", _check_storage_encrypted),
+    "backup_retention_period": Check("medium", _check_backup_retention),
+    "deletion_protection": Check("medium", _check_deletion_protection),
+    "iam_authentication": Check("medium", _check_iam_authentication),
+}
 
 
 def discover_rds_resources() -> list[dict[str, Any]]:
@@ -31,6 +74,8 @@ def discover_rds_resources() -> list[dict[str, Any]]:
                     "checks": ["storage_encrypted", "backup_retention_period"],
                     "engine": instance.get("Engine"),
                     "multi_az": instance.get("MultiAZ"),
+                    "storage_encrypted": instance.get("StorageEncrypted", False),
+                    "backup_retention_period": instance.get("BackupRetentionPeriod", 0),
                 }
             )
 
@@ -43,7 +88,8 @@ def discover_rds_resources() -> list[dict[str, Any]]:
                     "type": "db_cluster",
                     "checks": ["deletion_protection", "iam_authentication"],
                     "engine": cluster.get("Engine"),
-                    "iam_authentication": cluster.get("IAMDatabaseAuthenticationEnabled"),
+                    "deletion_protection": cluster.get("DeletionProtection", False),
+                    "iam_authentication": cluster.get("IAMDatabaseAuthenticationEnabled", False),
                 }
             )
 
@@ -92,9 +138,14 @@ def main() -> int:
         resources=resources,
         source=source_used,
     )
-    result = run_scan(config)
+    result = run_scan(config, CHECKS)
     if aws_error:
         result["aws_discovery_error"] = aws_error
+
+    s3_location = persist_findings_to_s3(result, FINDINGS_S3_BUCKET, FINDINGS_S3_PREFIX)
+    if s3_location:
+        result["s3_location"] = s3_location
+
     print(json.dumps(result, indent=2))
     return 0
 

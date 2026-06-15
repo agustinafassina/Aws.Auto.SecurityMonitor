@@ -1,0 +1,18 @@
+{
+  "resources": [
+    {
+      "id": "db-instance-example",
+      "type": "db_instance",
+      "checks": ["storage_encrypted", "backup_retention_period"],
+      "storage_encrypted": true,
+      "backup_retention_period": 7
+    },
+    {
+      "id": "db-cluster-example",
+      "type": "db_cluster",
+      "checks": ["deletion_protection", "iam_authentication"],
+      "deletion_protection": false,
+      "iam_authentication": true
+    }
+  ]
+}

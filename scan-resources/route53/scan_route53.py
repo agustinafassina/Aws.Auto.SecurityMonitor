@@ -2,17 +2,62 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 from typing import Any
+
+# --- S3 findings persistence (override via env in ECS) ---
+# Local: leave bucket empty to skip upload, or set e.g. "tf-dev-security-scan-findings"
+FINDINGS_S3_BUCKET = os.environ.get("FINDINGS_S3_BUCKET", "")
+FINDINGS_S3_PREFIX = os.environ.get("FINDINGS_S3_PREFIX", "findings/route53")
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 if str(ROOT_DIR) not in sys.path:
     sys.path.append(str(ROOT_DIR))
 
-from scanner_core import ResourceScannerConfig, load_resources, run_scan
+from scanner_core import (
+    Check,
+    ResourceScannerConfig,
+    load_resources,
+    persist_findings_to_s3,
+    run_scan,
+)
 
 DEFAULT_RESOURCES_FILE = Path(__file__).resolve().parent / "json-example" / "example.json"
+
+
+def _check_dnssec_enabled(resource: dict[str, Any]) -> tuple[bool, str]:
+    enabled = bool(resource.get("dnssec_enabled"))
+    return enabled, "DNSSEC signing active" if enabled else "DNSSEC not enabled"
+
+
+def _check_query_logging_enabled(resource: dict[str, Any]) -> tuple[bool, str]:
+    enabled = bool(resource.get("query_logging_enabled"))
+    return enabled, "query logging configured" if enabled else "query logging not configured"
+
+
+CHECKS: dict[str, Check] = {
+    "dnssec_enabled": Check("medium", _check_dnssec_enabled),
+    "query_logging_enabled": Check("low", _check_query_logging_enabled),
+}
+
+
+def _zone_dnssec_enabled(client: Any, zone_id: str) -> bool:
+    try:
+        response = client.get_dnssec(HostedZoneId=zone_id)
+    except Exception:  # noqa: BLE001
+        return False
+    key_signing_keys = response.get("KeySigningKeys", [])
+    return any(ksk.get("Status") == "ACTIVE" for ksk in key_signing_keys)
+
+
+def _zone_query_logging_enabled(client: Any, zone_id: str) -> bool:
+    try:
+        response = client.list_query_logging_configs(HostedZoneId=zone_id)
+    except Exception:  # noqa: BLE001
+        return False
+    return len(response.get("QueryLoggingConfigs", [])) > 0
 
 
 def discover_route53_resources() -> list[dict[str, Any]]:
@@ -26,13 +71,16 @@ def discover_route53_resources() -> list[dict[str, Any]]:
         for hosted_zone in page.get("HostedZones", []):
             zone_id_raw = hosted_zone.get("Id", "")
             zone_id = zone_id_raw.split("/")[-1] if zone_id_raw else hosted_zone.get("Name", "unknown")
+            is_private = hosted_zone.get("Config", {}).get("PrivateZone", False)
             resources.append(
                 {
                     "id": zone_id,
                     "name": hosted_zone.get("Name"),
                     "type": "hosted_zone",
                     "checks": ["dnssec_enabled", "query_logging_enabled"],
-                    "private_zone": hosted_zone.get("Config", {}).get("PrivateZone", False),
+                    "private_zone": is_private,
+                    "dnssec_enabled": _zone_dnssec_enabled(client, zone_id),
+                    "query_logging_enabled": _zone_query_logging_enabled(client, zone_id),
                 }
             )
 
@@ -81,9 +129,14 @@ def main() -> int:
         resources=resources,
         source=source_used,
     )
-    result = run_scan(config)
+    result = run_scan(config, CHECKS)
     if aws_error:
         result["aws_discovery_error"] = aws_error
+
+    s3_location = persist_findings_to_s3(result, FINDINGS_S3_BUCKET, FINDINGS_S3_PREFIX)
+    if s3_location:
+        result["s3_location"] = s3_location
+
     print(json.dumps(result, indent=2))
     return 0
 
