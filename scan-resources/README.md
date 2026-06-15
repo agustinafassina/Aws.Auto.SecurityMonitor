@@ -5,15 +5,16 @@ Python batch scanning baseline designed to grow by module (AWS service).
 ```text
 scan-resources/
   scanner_core.py
+  requirements.txt
   run_all_scans.py
   workflow.svg
   route53/
-    scan_route53.py
     Dockerfile
+    scan_route53.py
     json-example/example.json
   rds/
-    scan_rds.py
     Dockerfile
+    scan_rds.py
     json-example/example.json
 ```
 
@@ -37,18 +38,21 @@ scan-resources/
 
 ## 📦 Dependencies
 - Python 3.12+
-- `boto3` for `--source aws`
-  - `pip install boto3`
+- Pinned in `requirements.txt` (`boto3`), used for `--source aws` and by the Docker image.
+  - `pip install -r scan-resources/requirements.txt`
 
-## 🐳 Docker Execution (Batch)
-Each module has its own Dockerfile to run once and exit.
+## 🐳 Docker (one Dockerfile per module)
+Each module has its own Dockerfile under `scan-resources/<module>/`. Build context is the **repo root**:
 
-- Route53
-  - Build: `docker build -f scan-resources/route53/Dockerfile -t scan-route53 .`
-  - Run: `docker run --rm scan-route53 --source aws`
-- RDS
-  - Build: `docker build -f scan-resources/rds/Dockerfile -t scan-rds .`
-  - Run: `docker run --rm scan-rds --source aws`
+```bash
+docker build -f scan-resources/route53/Dockerfile -t scanners:route53 .
+docker run --rm scanners:route53
+
+docker build -f scan-resources/rds/Dockerfile -t scanners:rds .
+docker run --rm scanners:rds
+```
+
+See `azure-pipelines/modules/*-build.yml` for CI build and ECR push per module.
 
 ## 📈 How To Add New Scanning Modules
 Follow this pattern to add a new service, for example `s3`:
@@ -56,29 +60,56 @@ Follow this pattern to add a new service, for example `s3`:
 1. Create the module folder:
    - `scan-resources/s3/`
    - `scan-resources/s3/json-example/example.json`
-2. Create the scanner script:
+2. Create the scanner script and Dockerfile:
    - `scan-resources/s3/scan_s3.py`
+   - `scan-resources/s3/Dockerfile` (copy from `route53/Dockerfile`, adjust paths and CMD)
    - Reuse `scanner_core.py` (`load_resources`, `run_scan`, `ResourceScannerConfig`).
    - Implement `discover_s3_resources()` using `boto3`.
    - Support `--source auto|aws|file` and `--resources-file`.
-3. Create the module Dockerfile:
-   - `scan-resources/s3/Dockerfile`
-   - Follow the current Dockerfile pattern (Python slim + boto3 + script entrypoint).
-4. (Optional) Add it to the local runner:
-   - add `s3` to the `service_files` map in `scan-resources/run_all_scans.py`.
-5. Add the module to infrastructure:
-   - add an entry in `terraform-infrastructure/terraform.tfvars` under `scanner_jobs` (`s3 = { ... }`).
-   - Terraform will automatically create ECR, ECS task, EventBridge rule, logs, and alarm.
+   - Configure `FINDINGS_S3_BUCKET` and `FINDINGS_S3_PREFIX` at the top of the script.
+3. (Optional) Add it to the local runner:
+   - add `s3` to `run_all_scans.py`.
+4. Add the module to infrastructure in `terraform.tfvars` under `scanner_jobs`:
+   ```hcl
+   s3 = {
+     schedule_expression = "rate(7 days)"
+     cpu                 = 256
+     memory              = 512
+     command             = ["python", "s3/scan_s3.py", "--source", "aws"]
+     enabled             = true
+   }
+   ```
+   Terraform creates ECS task, EventBridge schedule, logs, and alarm. No new ECR repo needed.
+5. Add Azure DevOps pipelines:
+   - `azure-pipelines/modules/s3-build.yml`
+   - `azure-pipelines/modules/s3-ops.yml`
+   - Copy from `route53` examples and reuse `templates/`.
 
 ## 🧾 Recommended `example.json` Format
+Each resource lists the `checks` to run plus the attribute fields those checks evaluate.
+
 ```json
 {
   "resources": [
     {
       "id": "resource-id",
       "type": "resource-type",
-      "checks": ["check_1", "check_2"]
+      "checks": ["check_1", "check_2"],
+      "check_1": true,
+      "check_2": false
     }
   ]
 }
 ```
+
+## 🛡️ Check Engine
+- Each module registers a `CHECKS` map of `check_name -> Check(severity, fn)` (see `scan_rds.py` / `scan_route53.py`).
+- `scanner_core.run_scan` evaluates each resource's `checks` and returns per-check `status` (`pass` / `fail` / `error`) and `severity`.
+- Output includes a `summary` with failed resources and failed checks grouped by severity.
+- Severities: `low`, `medium`, `high`, `critical`.
+
+## 💾 Findings persistence (S3)
+- Each scanner script configures `FINDINGS_S3_BUCKET` and `FINDINGS_S3_PREFIX` at the top (overridable via env).
+- After each run, results are uploaded as JSON to `s3://{bucket}/{prefix}/{service}/{timestamp}.json`.
+- Leave `FINDINGS_S3_BUCKET` empty locally to skip upload; ECS tasks receive bucket/prefix from Terraform env vars.
+- Output includes `s3_location` with `s3_uri` on success, or `error` if upload fails.
