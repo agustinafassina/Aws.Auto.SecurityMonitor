@@ -1,0 +1,44 @@
+parameters:
+  - name: moduleName
+    type: string
+  - name: ecsTaskFamily
+    type: string
+  - name: eventBridgeRuleName
+    type: string
+  - name: action
+    type: string
+
+steps:
+  - checkout: self
+
+  - task: AWSShellScript@1
+    displayName: "${{ parameters.action }} (${{ parameters.moduleName }})"
+    inputs:
+      awsCredentials: aws-security-monitor
+      regionName: $(awsRegion)
+      scriptType: inline
+      inlineScript: |
+        set -euo pipefail
+        chmod +x scripts/run-scanner.sh scripts/scanner-schedule.sh
+        export AWS_REGION="$(awsRegion)"
+        export ECS_CLUSTER_NAME="$(ECS_CLUSTER_NAME)"
+        export ECS_TASK_FAMILY="${{ parameters.ecsTaskFamily }}"
+        export ECS_SUBNET_IDS="$(ECS_SUBNET_IDS)"
+        export ECS_SECURITY_GROUP_ID="$(ECS_SECURITY_GROUP_ID)"
+        export ECS_ASSIGN_PUBLIC_IP="$(ECS_ASSIGN_PUBLIC_IP)"
+
+        case "${{ parameters.action }}" in
+          run-now)
+            ./scripts/run-scanner.sh "${{ parameters.moduleName }}"
+            ;;
+          enable-schedule)
+            ./scripts/scanner-schedule.sh enable "${{ parameters.eventBridgeRuleName }}"
+            ;;
+          disable-schedule)
+            ./scripts/scanner-schedule.sh disable "${{ parameters.eventBridgeRuleName }}"
+            ;;
+          *)
+            echo "Unknown action: ${{ parameters.action }}"
+            exit 1
+            ;;
+        esac

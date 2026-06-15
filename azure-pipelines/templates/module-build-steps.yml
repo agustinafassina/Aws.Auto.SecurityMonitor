@@ -1,0 +1,64 @@
+parameters:
+  - name: moduleName
+    type: string
+
+steps:
+  - checkout: self
+
+  - bash: |
+      python "scan-resources/${{ parameters.moduleName }}/scan_${{ parameters.moduleName }}.py" --source file
+    displayName: Smoke test (${{ parameters.moduleName }}, file mode)
+    workingDirectory: $(Build.SourcesDirectory)
+
+  - task: AWSShellScript@1
+    displayName: Login to AWS
+    inputs:
+      awsCredentials: aws-security-monitor
+      regionName: $(awsRegion)
+      scriptType: inline
+      inlineScript: |
+        set -euo pipefail
+        echo "Verifying AWS credentials..."
+        aws sts get-caller-identity
+        ACCOUNT_ID="$(aws sts get-caller-identity --query Account --output text)"
+        echo "##vso[task.setvariable variable=awsAccountId]${ACCOUNT_ID}"
+        echo "AWS login OK (account ${ACCOUNT_ID}, region $(awsRegion))"
+
+  - task: AWSShellScript@1
+    displayName: Login to Amazon ECR
+    inputs:
+      awsCredentials: aws-security-monitor
+      regionName: $(awsRegion)
+      scriptType: inline
+      inlineScript: |
+        set -euo pipefail
+        REGISTRY="$(awsAccountId).dkr.ecr.$(awsRegion).amazonaws.com"
+        echo "Logging into ECR registry ${REGISTRY}..."
+        aws ecr get-login-password --region "$(awsRegion)" | docker login --username AWS --password-stdin "${REGISTRY}"
+        ECR_URI="${REGISTRY}/$(ecrRepository)"
+        echo "##vso[task.setvariable variable=ecrRegistry]${REGISTRY}"
+        echo "##vso[task.setvariable variable=ecrImageUri]${ECR_URI}"
+        echo "ECR login OK (${ECR_URI})"
+
+  - task: Docker@2
+    displayName: Build scanner image (${{ parameters.moduleName }})
+    inputs:
+      command: build
+      Dockerfile: scan-resources/${{ parameters.moduleName }}/Dockerfile
+      buildContext: $(Build.SourcesDirectory)
+      repository: scanners
+      tags: |
+        ${{ parameters.moduleName }}
+
+  - task: AWSShellScript@1
+    displayName: Push image to ECR (${{ parameters.moduleName }})
+    inputs:
+      awsCredentials: aws-security-monitor
+      regionName: $(awsRegion)
+      scriptType: inline
+      inlineScript: |
+        set -euo pipefail
+        MODULE="${{ parameters.moduleName }}"
+        docker tag "scanners:${MODULE}" "$(ecrImageUri):${MODULE}"
+        docker push "$(ecrImageUri):${MODULE}"
+        echo "Pushed $(ecrImageUri):${MODULE}"

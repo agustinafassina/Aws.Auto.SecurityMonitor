@@ -25,6 +25,7 @@ from scanner_core import (
 )
 
 DEFAULT_RESOURCES_FILE = Path(__file__).resolve().parent / "json-example" / "example.json"
+MAX_DOMAINS = 10
 
 
 def _check_dnssec_enabled(resource: dict[str, Any]) -> tuple[bool, str]:
@@ -83,6 +84,8 @@ def discover_route53_resources() -> list[dict[str, Any]]:
                     "query_logging_enabled": _zone_query_logging_enabled(client, zone_id),
                 }
             )
+            if len(resources) >= MAX_DOMAINS:
+                return resources
 
     return resources
 
@@ -123,6 +126,9 @@ def main() -> int:
             resources = load_resources(resources_file)
             source_used = "file"
             aws_error = str(exc)
+
+    if len(resources) > MAX_DOMAINS:
+        resources = resources[:MAX_DOMAINS]
 
     config = ResourceScannerConfig(
         service_name="route53",

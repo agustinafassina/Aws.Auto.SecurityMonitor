@@ -19,7 +19,7 @@ Use the module-specific documentation to run commands and deploy:
 - `terraform-infrastructure/README.md` for Terraform and AWS operations.
 - `azure-pipelines/README.md` for CI/CD setup.
 
-> Prerequisite: create the Terraform state S3 bucket and configure `terraform-infrastructure/backend.tf` before `terraform init`.
+> Prerequisite: create the Terraform state S3 bucket, copy `environments/*.example` files, and run `terraform init -backend-config=...` before the first apply.
 
 ## 📈 Scaling Model
 Add a scanner module:

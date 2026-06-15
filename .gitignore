@@ -10,4 +10,19 @@ __pycache__/
 .env.development
 .env.test
 .env.production
-.env.local
+
+# Terraform
+.terraform/
+*.tfplan
+*.tfstate
+*.tfstate.*
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+*.tfvars
+*.backend.hcl
+!*.tfvars.example
+!**/*.tfvars.example
+!**/*.backend.hcl.example

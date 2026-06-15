@@ -4,10 +4,12 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app/scan-resources
-COPY scan-resources/ /app/scan-resources/
-RUN pip install --no-cache-dir boto3
 
-WORKDIR /app/scan-resources/rds
+COPY scan-resources/requirements.txt .
+COPY scan-resources/scanner_core.py .
+COPY scan-resources/rds ./rds
 
-# Batch mode: run once and exit.
-ENTRYPOINT ["python", "scan_rds.py"]
+RUN pip install --no-cache-dir -r requirements.txt
+
+# ECS overrides command; default for local docker run.
+CMD ["python", "rds/scan_rds.py", "--source", "aws"]

@@ -1,0 +1,22 @@
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - scan-resources/route53/*
+      - scan-resources/scanner_core.py
+      - scan-resources/requirements.txt
+
+pr: none
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  - group: aws-security-monitor-dev
+
+steps:
+  - template: ../templates/module-build-steps.yml
+    parameters:
+      moduleName: route53
