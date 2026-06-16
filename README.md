@@ -1,42 +1,26 @@
 # 📘 AWS Auto Security Monitor
-Scalable baseline to scan AWS resources with containerized Python jobs and recurring execution on AWS.
+Route53 security scanning on AWS — containerized Python jobs, scheduled or on-demand via ECS Fargate.
 
 ## 🗺️ Workflow
-High-level overview of how the two sections connect. See each section README for the detailed diagrams.
+![Overview](./workflow.svg)
 
-![AWS Auto Security Monitor Workflow](./workflow.svg)
+## 📂 Repository map
+| Path | README | Scope |
+|------|--------|--------|
+| `scan-resources/` | [scan-resources/README.md](scan-resources/README.md) | Python scanners, `scanner_core`, Route53 module |
+| `scan-resources/_template/` | [_template/README.md](scan-resources/_template/README.md) | Scaffold a new scanner module (end-to-end) |
+| `terraform-infrastructure/` | [terraform-infrastructure/README.md](terraform-infrastructure/README.md) | AWS infra (ECS, ECR, EventBridge, S3, SNS, IAM) |
+| `terraform-infrastructure/environments/` | [environments/README.md](terraform-infrastructure/environments/README.md) | Per-env `tfvars` and backend config |
+| `azure-pipelines/` | [azure-pipelines/README.md](azure-pipelines/README.md) | Build, deploy, and ops pipelines |
+| `scripts/` | — | `run-scanner.sh`, `scanner-schedule.sh` (see terraform README) |
 
-## 🧱 Repository Structure
-- `scan-resources/`: scanner modules (each with its own `Dockerfile`), shared `scanner_core.py`
-- `terraform-infrastructure/`: ECS, ECR, EventBridge, CloudWatch, S3, IAM
-- `azure-pipelines/`: per-module build/ops pipelines + shared infrastructure pipeline
-- `scripts/`: `run-scanner.sh`, `scanner-schedule.sh`
+## ▶️ Quick start
+1. 🏗️ Deploy infra → [terraform-infrastructure/README.md](terraform-infrastructure/README.md) (prerequisite: [environments/](terraform-infrastructure/environments/README.md))
+2. 🔄 Build Route53 image → [azure-pipelines/README.md](azure-pipelines/README.md)
+3. 🐍 Run locally → [scan-resources/README.md](scan-resources/README.md)
 
-## ▶️ Getting Started
-Use the module-specific documentation to run commands and deploy:
+## 📌 Active module
+**route53** — scans hosted zones (DNSSEC, query logging). Max 10 domains per run.
 
-- `scan-resources/README.md` for scanner execution and module creation.
-- `terraform-infrastructure/README.md` for Terraform and AWS operations.
-- `azure-pipelines/README.md` for CI/CD setup.
-
-> Prerequisite: create the Terraform state S3 bucket, copy `environments/*.example` files, and run `terraform init -backend-config=...` before the first apply.
-
-## 📈 Scaling Model
-Add a scanner module:
-
-1. `scan-resources/<service>/scan_<service>.py` + `json-example/example.json`
-2. Entry in `terraform-infrastructure/terraform.tfvars` → `scanner_jobs`
-3. `azure-pipelines/modules/<service>-build.yml` + `<service>-ops.yml`
-4. Build and push image with module tag → Fargate pulls it on next run (no terraform apply for code-only changes)
-
-One ECR repo; each module uses its own tag (`route53`, `rds`, …).
-
-## 📚 Module Documentation
-- Scanning framework: `scan-resources/README.md`
-- Infrastructure: `terraform-infrastructure/README.md`
-- Pipelines: `azure-pipelines/README.md`
-
-## 📝 Notes
-- Scanner scripts support `--source aws|file|auto`.
-- AWS discovery uses `boto3` and IAM roles (no API keys).
-- Manual ops per module: Azure DevOps `*-ops` pipelines (run now / enable or disable schedule).
+## ➕ Add modules later
+[scan-resources/_template/README.md](scan-resources/_template/README.md)
