@@ -24,7 +24,6 @@ from scanner_core import (
     build_scan_payload,
     is_batch_failed,
     load_resources,
-    persist_findings_to_s3,
     persist_json_to_s3,
     scan_resource,
 )
@@ -316,11 +315,6 @@ def run_batch_scan(
         final["s3_location"] = summary_location
     if zone_s3_locations:
         final["zone_s3_locations"] = zone_s3_locations
-
-    # Legacy final artifact (single file per run timestamp)
-    legacy_location = persist_findings_to_s3(final, FINDINGS_S3_BUCKET, FINDINGS_S3_PREFIX)
-    if legacy_location and "s3_location" not in final:
-        final["s3_location"] = legacy_location
 
     exit_code = 1 if is_batch_failed(scan_results) else 0
     if exit_code != 0:

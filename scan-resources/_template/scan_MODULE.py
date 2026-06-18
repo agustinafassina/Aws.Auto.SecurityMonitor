@@ -18,6 +18,7 @@ if str(ROOT_DIR) not in sys.path:
 from scanner_core import (
     Check,
     ResourceScannerConfig,
+    is_batch_failed,
     load_resources,
     persist_findings_to_s3,
     run_scan,
@@ -64,6 +65,11 @@ def build_parser() -> argparse.ArgumentParser:
         default="auto",
         help="Source for resources: file, aws, or auto (try aws then fallback file).",
     )
+    parser.add_argument(
+        "--smoke-test",
+        action="store_true",
+        help="CI smoke: exit 0 if the scan completes (findings may still fail).",
+    )
     return parser
 
 
@@ -105,7 +111,10 @@ def main() -> int:
         result["s3_location"] = s3_location
 
     print(json.dumps(result, indent=2))
-    return 0
+
+    if args.smoke_test:
+        return 0
+    return 1 if is_batch_failed(result["results"]) else 0
 
 
 if __name__ == "__main__":
