@@ -1,10 +1,6 @@
 parameters:
   - name: moduleName
     type: string
-  - name: ecsTaskFamily
-    type: string
-  - name: eventBridgeRuleName
-    type: string
   - name: action
     type: string
 
@@ -19,23 +15,30 @@ steps:
       scriptType: inline
       inlineScript: |
         set -euo pipefail
+        MODULE="${{ parameters.moduleName }}"
+        PREFIX="$(namePrefix)"
+        TASK_FAMILY="${PREFIX}-${MODULE}"
+        RULE_NAME="${PREFIX}-${MODULE}-schedule"
+
         chmod +x scripts/run-scanner.sh scripts/scanner-schedule.sh
         export AWS_REGION="$(awsRegion)"
         export ECS_CLUSTER_NAME="$(ECS_CLUSTER_NAME)"
-        export ECS_TASK_FAMILY="${{ parameters.ecsTaskFamily }}"
+        export ECS_TASK_FAMILY="${TASK_FAMILY}"
         export ECS_SUBNET_IDS="$(ECS_SUBNET_IDS)"
         export ECS_SECURITY_GROUP_ID="$(ECS_SECURITY_GROUP_ID)"
         export ECS_ASSIGN_PUBLIC_IP="$(ECS_ASSIGN_PUBLIC_IP)"
 
+        echo "Module=${MODULE} TaskFamily=${TASK_FAMILY} Rule=${RULE_NAME}"
+
         case "${{ parameters.action }}" in
           run-now)
-            ./scripts/run-scanner.sh "${{ parameters.moduleName }}"
+            ./scripts/run-scanner.sh "${MODULE}"
             ;;
           enable-schedule)
-            ./scripts/scanner-schedule.sh enable "${{ parameters.eventBridgeRuleName }}"
+            ./scripts/scanner-schedule.sh enable "${RULE_NAME}"
             ;;
           disable-schedule)
-            ./scripts/scanner-schedule.sh disable "${{ parameters.eventBridgeRuleName }}"
+            ./scripts/scanner-schedule.sh disable "${RULE_NAME}"
             ;;
           *)
             echo "Unknown action: ${{ parameters.action }}"

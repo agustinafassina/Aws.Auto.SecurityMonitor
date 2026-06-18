@@ -6,7 +6,8 @@ steps:
   - checkout: self
 
   - bash: |
-      python "scan-resources/${{ parameters.moduleName }}/scan_${{ parameters.moduleName }}.py" --source file
+      python "scan-resources/${{ parameters.moduleName }}/scan_${{ parameters.moduleName }}.py" \
+        --source file --smoke-test
     displayName: Smoke test (${{ parameters.moduleName }}, file mode)
     workingDirectory: $(Build.SourcesDirectory)
 
@@ -18,11 +19,9 @@ steps:
       scriptType: inline
       inlineScript: |
         set -euo pipefail
-        echo "Verifying AWS credentials..."
         aws sts get-caller-identity
         ACCOUNT_ID="$(aws sts get-caller-identity --query Account --output text)"
         echo "##vso[task.setvariable variable=awsAccountId]${ACCOUNT_ID}"
-        echo "AWS login OK (account ${ACCOUNT_ID}, region $(awsRegion))"
 
   - task: AWSShellScript@1
     displayName: Login to Amazon ECR
@@ -33,15 +32,11 @@ steps:
       inlineScript: |
         set -euo pipefail
         REGISTRY="$(awsAccountId).dkr.ecr.$(awsRegion).amazonaws.com"
-        echo "Logging into ECR registry ${REGISTRY}..."
         aws ecr get-login-password --region "$(awsRegion)" | docker login --username AWS --password-stdin "${REGISTRY}"
-        ECR_URI="${REGISTRY}/$(ecrRepository)"
-        echo "##vso[task.setvariable variable=ecrRegistry]${REGISTRY}"
-        echo "##vso[task.setvariable variable=ecrImageUri]${ECR_URI}"
-        echo "ECR login OK (${ECR_URI})"
+        echo "##vso[task.setvariable variable=ecrImageUri]${REGISTRY}/$(ecrRepository)"
 
   - task: Docker@2
-    displayName: Build scanner image (${{ parameters.moduleName }})
+    displayName: Build image (${{ parameters.moduleName }})
     inputs:
       command: build
       Dockerfile: scan-resources/${{ parameters.moduleName }}/Dockerfile

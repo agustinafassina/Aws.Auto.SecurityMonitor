@@ -117,12 +117,43 @@ def _build_summary(scan_results: list[dict[str, Any]]) -> dict[str, Any]:
                 if check["severity"] in by_severity:
                     by_severity[check["severity"]] += 1
 
+    resources_failed = sum(1 for r in scan_results if r["status"] in ("fail", "error"))
+
     return {
         "resources_total": len(scan_results),
-        "resources_failed": sum(1 for r in scan_results if r["status"] == "fail"),
+        "resources_failed": resources_failed,
+        "resources_errored": sum(1 for r in scan_results if r["status"] == "error"),
         "checks_failed": failed_checks,
         "failed_by_severity": by_severity,
+        "batch_status": "fail" if resources_failed > 0 else "pass",
     }
+
+
+def build_scan_payload(
+    service_name: str,
+    source: str,
+    scan_results: list[dict[str, Any]],
+    *,
+    batch_id: str | None = None,
+    extra: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    payload: dict[str, Any] = {
+        "service": service_name,
+        "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+        "source": source,
+        "resource_count": len(scan_results),
+        "summary": _build_summary(scan_results),
+        "results": scan_results,
+    }
+    if batch_id:
+        payload["batch_id"] = batch_id
+    if extra:
+        payload.update(extra)
+    return payload
+
+
+def is_batch_failed(scan_results: list[dict[str, Any]]) -> bool:
+    return any(result["status"] in ("fail", "error") for result in scan_results)
 
 
 def run_scan(
@@ -159,6 +190,26 @@ def _build_s3_key(prefix: str, service_name: str, timestamp_utc: str) -> str:
     if normalized_prefix:
         return f"{normalized_prefix}/{service_name}/{safe_timestamp}.json"
     return f"{service_name}/{safe_timestamp}.json"
+
+
+def persist_json_to_s3(payload: dict[str, Any], bucket: str, key: str) -> dict[str, Any]:
+    if not bucket:
+        return {"skipped": True, "reason": "empty bucket"}
+
+    try:
+        import boto3
+
+        body = json.dumps(payload, indent=2).encode("utf-8")
+        client = boto3.client("s3")
+        client.put_object(
+            Bucket=bucket,
+            Key=key,
+            Body=body,
+            ContentType="application/json",
+        )
+        return {"bucket": bucket, "key": key, "s3_uri": f"s3://{bucket}/{key}"}
+    except Exception as exc:  # noqa: BLE001
+        return {"error": str(exc), "key": key}
 
 
 def persist_findings_to_s3(

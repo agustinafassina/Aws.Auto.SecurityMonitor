@@ -1,24 +1,34 @@
 # 🔄 Azure DevOps Pipelines
-Build, deploy, and operate scanners on AWS. Infra details: [terraform-infrastructure/README.md](../terraform-infrastructure/README.md).
+Build, deploy, and operate scanners on AWS. Infra: [terraform-infrastructure/README.md](../terraform-infrastructure/README.md).
 
-## 📋 Pipelines
+## 📋 Pipelines (register 3 in Azure DevOps)
+
 | Pipeline | File | Trigger |
 |----------|------|---------|
-| Route53 build | `modules/route53-build.yml` | `scan-resources/route53/**` + shared files on `main` |
-| Route53 ops | `modules/route53-ops.yml` | Manual |
-| Terraform | `infrastructure.yml` | `terraform-infrastructure/**` on `main` |
+| **Scanners build** | `scanners-build.yml` | `scan-resources/**` on `main` (all modules in matrix) |
+| **Scanners ops** | `scanners-ops.yml` | Manual |
+| **Terraform** | `infrastructure.yml` | `terraform-infrastructure/**` on `main` |
 
-Templates: `templates/module-build-steps.yml`, `templates/module-ops-steps.yml`
+Shared templates: `templates/module-build-steps.yml`, `templates/module-ops-steps.yml`
 
 ## ⚙️ One-time setup
 1. 🔑 AWS service connection: `aws-security-monitor`
 2. 📦 Variable group `aws-security-monitor-dev` — [variable-group.example.md](variable-group.example.md)
-3. ✅ Azure environment `security-monitor-dev` (approval before Terraform apply)
-4. 📌 Register the three YAML files as pipelines
+3. ✅ Environment `security-monitor-dev` (Terraform apply approval)
+4. 📌 Register `scanners-build.yml`, `scanners-ops.yml`, `infrastructure.yml`
 
-## 🚀 Route53 flow
-1. 📝 Code change under `scan-resources/route53/` → **route53-build** (AWS login → ECR login → build → push tag `route53`)
-2. ▶️ **route53-ops** (manual):
+## 🐳 Build all images (`scanners-build.yml`)
+- **One pipeline** builds **every module** in the `strategy.matrix` (parallel jobs).
+- Today: `route53`. Change in `scanner_core.py` rebuilds all matrix entries.
+- Per module: smoke test → AWS login → ECR login → docker build → push `ECR:{module}`.
+
+## ▶️ On-demand / EventBridge (`scanners-ops.yml`)
+Single manual pipeline. Parameters:
+
+| Parameter | Values |
+|-----------|--------|
+| `scanner` | `route53`, … |
+| `action` | `run-now`, `enable-schedule`, `disable-schedule` |
 
 | Action | Effect |
 |--------|--------|
@@ -26,12 +36,19 @@ Templates: `templates/module-build-steps.yml`, `templates/module-ops-steps.yml`
 | `enable-schedule` | Enable EventBridge rule |
 | `disable-schedule` | Disable EventBridge rule |
 
-3. 🏗️ Infra change → **infrastructure** (`init -backend-config` → `plan` → `apply tfplan`)
+Task family and rule name are derived from `namePrefix` + module (no per-module variable group keys).
 
-## ➕ New module pipelines
-Copy `scan-resources/_template/azure-pipelines-*.example` → `modules/<module>-build.yml` and `<module>-ops.yml`. Add variable group keys `ECS_TASK_FAMILY_<MODULE>`, `EVENTBRIDGE_RULE_<MODULE>`.
+## 🏗️ Infrastructure (`infrastructure.yml`)
+`init -backend-config` → `plan -out=tfplan` → `apply tfplan`
 
-Full module checklist: [_template/README.md](../scan-resources/_template/README.md).
+## ➕ Add a new module (2 edits)
+1. **`scanners-build.yml`** — add matrix row:
+   ```yaml
+   s3:
+     moduleName: s3
+   ```
+2. **`scanners-ops.yml`** — add `s3` to `parameters.scanner.values`
 
-## 🐳 Images
-Single ECR repo (`ecrRepository` in variable group). One tag per module (`route53`, …).
+Then follow [scan-resources/_template/README.md](../scan-resources/_template/README.md) for code, Terraform, and IAM.
+
+No new pipeline YAML files per module.

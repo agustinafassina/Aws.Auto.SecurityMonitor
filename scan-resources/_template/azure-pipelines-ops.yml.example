@@ -1,0 +1,3 @@
+# See azure-pipelines-build.yml.example — ops uses scanners-ops.yml only.
+
+Add module name to `parameters.scanner.values` in azure-pipelines/scanners-ops.yml.

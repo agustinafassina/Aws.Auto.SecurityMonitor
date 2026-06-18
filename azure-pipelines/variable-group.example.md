@@ -1,16 +1,19 @@
-# Variable group template (create in Azure DevOps Library):
-#   awsRegion: sa-east-1
-#   ecrRepository: security-scan/scanners
-#   tfVarsFile: environments/qa.tfvars
-#   backendConfigFile: environments/qa.backend.hcl
-#   ECS_CLUSTER_NAME: tf-qa-security-scan-cluster
-#   ECS_TASK_FAMILY_ROUTE53: tf-qa-security-scan-route53
-#   ECS_TASK_FAMILY_RDS: tf-qa-security-scan-rds
-#   EVENTBRIDGE_RULE_ROUTE53: tf-qa-security-scan-route53-schedule
-#   EVENTBRIDGE_RULE_RDS: tf-qa-security-scan-rds-schedule
-#   ECS_SECURITY_GROUP_ID: sg-xxxxxxxx
-#   ECS_SUBNET_IDS: subnet-aaa,subnet-bbb
-#   ECS_ASSIGN_PUBLIC_IP: ENABLED
-#
-# Terraform outputs: name_prefix, task_definition_families, eventbridge_rule_names
-# Do not store alarm emails in the group if avoidable — use environments/*.tfvars as secure files.
+# 📦 Variable Group Template
+Create in Azure DevOps Library as `aws-security-monitor-dev`:
+
+```text
+awsRegion: sa-east-1
+ecrRepository: security-scan/scanners
+namePrefix: tf-qa-security-scan
+tfVarsFile: environments/qa.tfvars
+backendConfigFile: environments/qa.backend.hcl
+ECS_CLUSTER_NAME: tf-qa-security-scan-cluster
+ECS_SECURITY_GROUP_ID: sg-xxxxxxxx
+ECS_SUBNET_IDS: subnet-aaa,subnet-bbb
+ECS_ASSIGN_PUBLIC_IP: ENABLED
+```
+
+- `namePrefix` = Terraform output `name_prefix` (used by `scanners-ops` for task family `{prefix}-{module}` and rule `{prefix}-{module}-schedule`).
+- `ECS_CLUSTER_NAME` = output `ecs_cluster_name`.
+
+See [README.md](README.md).

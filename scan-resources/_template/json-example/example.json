@@ -1,0 +1,16 @@
+{
+  "resources": [
+    {
+      "id": "resource-example-1",
+      "type": "MODULE_resource",
+      "checks": ["example_secure"],
+      "is_secure": true
+    },
+    {
+      "id": "resource-example-2",
+      "type": "MODULE_resource",
+      "checks": ["example_secure"],
+      "is_secure": false
+    }
+  ]
+}

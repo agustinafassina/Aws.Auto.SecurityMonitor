@@ -1,0 +1,35 @@
+# Build and push scanner images to ECR (one job per module, runs in parallel).
+# Add a new module: add a row to the strategy.matrix below.
+# Triggers on any scan-resources change (shared code rebuilds all modules).
+
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - scan-resources/**
+    exclude:
+      - scan-resources/_template/**
+
+pr: none
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  - group: aws-security-monitor-dev
+
+jobs:
+  - job: BuildScanners
+    displayName: Build scanner images
+    strategy:
+      matrix:
+        route53:
+          moduleName: route53
+        # s3:
+        #   moduleName: s3
+    steps:
+      - template: templates/module-build-steps.yml
+        parameters:
+          moduleName: $(moduleName)

@@ -7,9 +7,9 @@ WORKDIR /app/scan-resources
 
 COPY scan-resources/requirements.txt .
 COPY scan-resources/scanner_core.py .
-COPY scan-resources/rds ./rds
+COPY scan-resources/MODULE ./MODULE
 
 RUN pip install --no-cache-dir -r requirements.txt
 
 # ECS overrides command; default for local docker run.
-CMD ["python", "rds/scan_rds.py", "--source", "aws"]
+CMD ["python", "MODULE/scan_MODULE.py", "--source", "aws"]

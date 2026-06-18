@@ -25,9 +25,17 @@ python scan-resources/route53/scan_route53.py --source auto
 |------|-------------|
 | `--source auto\|aws\|file` | `aws`: boto3; `file`: `json-example/example.json`; `auto`: aws then fallback |
 | `--resources-file <path>` | Custom JSON input |
+| `--domain-timeout <sec>` | Per-domain AWS discovery timeout (default: 30, env: `ROUTE53_DOMAIN_TIMEOUT_SECONDS`) |
+| `--max-domains <n>` | Max hosted zones per run (default: 10) |
+
+### Batch behaviour
+- Scans **one domain at a time** with logging to stderr.
+- **Pushes each zone** to S3 as it completes (`…/runs/{batch_id}/zones/{zone_id}.json`) and updates a running `summary.json` (no data loss if the task dies mid-run).
+- **Exit code 1** if any domain has `fail` or `error` (ECS task fails → SNS notification).
+- **Timeout** → checks `fail` with `domain discovery timed out after Ns` (not `error`). API discovery errors → `error`.
 
 ## 🐳 Route53 — Docker
-Build context = repo root. CI: [azure-pipelines/modules/route53-build.yml](../azure-pipelines/modules/route53-build.yml).
+Build context = repo root. CI: [azure-pipelines/scanners-build.yml](../azure-pipelines/scanners-build.yml).
 
 ```bash
 docker build -f scan-resources/route53/Dockerfile -t scanners:route53 .

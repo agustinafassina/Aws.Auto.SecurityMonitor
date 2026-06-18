@@ -1,0 +1,9 @@
+# Add to environments/<env>.tfvars under scanner_jobs:
+#
+# MODULE = {
+#   schedule_expression = "rate(1 day)"
+#   cpu                 = 256
+#   memory              = 512
+#   command             = ["python", "MODULE/scan_MODULE.py", "--source", "aws"]
+#   enabled             = true
+# }

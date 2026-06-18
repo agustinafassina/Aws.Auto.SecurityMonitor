@@ -1,0 +1,33 @@
+# Manual ops: run scanner now or enable/disable EventBridge schedule.
+# Add a new module: add its name to parameters.scanner.values below.
+
+trigger: none
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  - group: aws-security-monitor-dev
+
+parameters:
+  - name: scanner
+    displayName: Scanner module
+    type: string
+    default: route53
+    values:
+      - route53
+      # - s3
+  - name: action
+    displayName: Action
+    type: string
+    default: run-now
+    values:
+      - run-now
+      - enable-schedule
+      - disable-schedule
+
+steps:
+  - template: templates/module-ops-steps.yml
+    parameters:
+      moduleName: ${{ parameters.scanner }}
+      action: ${{ parameters.action }}

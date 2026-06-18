@@ -1,0 +1,14 @@
+# Add module to unified pipelines (do not copy per-module YAML files).
+
+## 1. scanners-build.yml — add matrix row:
+```yaml
+        s3:
+          moduleName: s3
+```
+
+## 2. scanners-ops.yml — add to parameters.scanner.values:
+```yaml
+      - s3
+```
+
+Task family and EventBridge rule are auto-derived from `namePrefix` in the variable group.
