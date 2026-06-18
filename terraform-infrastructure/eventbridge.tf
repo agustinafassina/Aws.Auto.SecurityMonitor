@@ -1,4 +1,3 @@
-# EventBridge: per-scanner schedule rule and ECS run-task target.
 resource "aws_cloudwatch_event_rule" "scanner" {
   for_each = var.scanner_jobs
 

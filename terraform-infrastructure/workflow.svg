@@ -1,117 +1,213 @@
-<svg width="1440" height="980" viewBox="0 0 1440 980" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial, sans-serif">
+<svg width="1440" height="1320" viewBox="0 0 1440 1320" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial, sans-serif">
   <defs>
     <style>
       .title    { font-size: 32px; font-weight: 700; fill: #0f172a; }
       .subtitle { font-size: 17px; font-weight: 500; fill: #475569; }
-      .step     { font-size: 16px; font-weight: 700; fill: #ffffff; }
-      .h        { font-size: 18px; font-weight: 700; fill: #0f172a; }
-      .t        { font-size: 14px; font-weight: 500; fill: #334155; }
-      .chip     { font-size: 14px; font-weight: 700; fill: #1e293b; }
-      .lane     { font-size: 17px; font-weight: 700; fill: #0f172a; }
+      .step     { font-size: 15px; font-weight: 700; fill: #ffffff; }
+      .h        { font-size: 17px; font-weight: 700; fill: #0f172a; }
+      .t        { font-size: 13px; font-weight: 500; fill: #334155; }
+      .chip     { font-size: 13px; font-weight: 700; fill: #1e293b; }
+      .lane     { font-size: 16px; font-weight: 700; fill: #0f172a; }
       .note     { font-size: 14px; font-weight: 600; fill: #1d4ed8; }
+      .muted    { font-size: 13px; font-weight: 500; fill: #64748b; }
     </style>
     <marker id="arrow" markerWidth="12" markerHeight="12" refX="8" refY="4" orient="auto">
       <path d="M0,0 L0,8 L10,4 z" fill="#2563eb" />
     </marker>
+    <marker id="arrow-muted" markerWidth="12" markerHeight="12" refX="8" refY="4" orient="auto">
+      <path d="M0,0 L0,8 L10,4 z" fill="#94a3b8" />
+    </marker>
+    <marker id="arrow-green" markerWidth="12" markerHeight="12" refX="8" refY="4" orient="auto">
+      <path d="M0,0 L0,8 L10,4 z" fill="#16a34a" />
+    </marker>
+    <marker id="arrow-orange" markerWidth="12" markerHeight="12" refX="8" refY="4" orient="auto">
+      <path d="M0,0 L0,8 L10,4 z" fill="#ea580c" />
+    </marker>
   </defs>
 
-  <rect x="0" y="0" width="1440" height="980" fill="#ffffff" />
+  <rect x="0" y="0" width="1440" height="1320" fill="#ffffff" />
 
-  <text x="720" y="54" text-anchor="middle" class="title">Terraform Infrastructure - Workflow</text>
-  <text x="720" y="86" text-anchor="middle" class="subtitle">Multiple scanners on ECS Fargate, each service has its own schedule (daily | weekly | monthly)</text>
+  <text x="720" y="52" text-anchor="middle" class="title">Terraform Infrastructure - Workflow</text>
+  <text x="720" y="84" text-anchor="middle" class="subtitle">Scales via scanner_jobs map - route53 active - add entries + scan-resources/_template to grow</text>
 
-  <!-- SHARED INFRA -->
-  <rect x="70" y="116" width="360" height="34" rx="8" fill="#0f172a" />
-  <text x="90" y="139" class="step">Provisioned by Terraform (shared)</text>
+  <!-- STEP 0: INPUTS -->
+  <rect x="70" y="108" width="300" height="32" rx="8" fill="#0f172a" />
+  <text x="90" y="130" class="step">INPUT - scanner_jobs (for_each)</text>
 
-  <rect x="70" y="162" width="1300" height="118" rx="16" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2" />
+  <rect x="70" y="152" width="1300" height="88" rx="14" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2" />
+  <rect x="96" y="172" width="360" height="56" rx="10" fill="#ede9fe" stroke="#7c3aed" stroke-width="2" />
+  <text x="276" y="196" text-anchor="middle" class="h">environments/*.tfvars</text>
+  <text x="276" y="216" text-anchor="middle" class="t">environment, project_name, scanner_jobs</text>
 
-  <rect x="100" y="184" width="290" height="74" rx="12" fill="#ede9fe" stroke="#7c3aed" stroke-width="2" />
-  <text x="245" y="216" text-anchor="middle" class="h">Terraform</text>
-  <text x="245" y="240" text-anchor="middle" class="t">for_each over scanner_jobs</text>
+  <rect x="480" y="172" width="420" height="56" rx="10" fill="#ffffff" stroke="#64748b" stroke-width="2" />
+  <text x="690" y="196" text-anchor="middle" class="h">scanner_jobs entry (per module)</text>
+  <text x="690" y="216" text-anchor="middle" class="t">schedule, cpu, memory, command, image_tag, enabled</text>
 
-  <rect x="415" y="184" width="290" height="74" rx="12" fill="#e0f2fe" stroke="#0284c7" stroke-width="2" />
-  <text x="560" y="216" text-anchor="middle" class="h">ECR</text>
-  <text x="560" y="240" text-anchor="middle" class="t">one repo per scanner</text>
+  <rect x="924" y="172" width="420" height="56" rx="10" fill="#ffffff" stroke="#2563eb" stroke-width="2.5" />
+  <text x="1134" y="196" text-anchor="middle" class="h">route53 (default)</text>
+  <text x="1134" y="216" text-anchor="middle" class="t">rate(1 day) - python route53/scan_route53.py</text>
 
-  <rect x="730" y="184" width="290" height="74" rx="12" fill="#fef3c7" stroke="#f59e0b" stroke-width="2" />
-  <text x="875" y="216" text-anchor="middle" class="h">IAM roles</text>
-  <text x="875" y="240" text-anchor="middle" class="t">task exec, task, events</text>
+  <path d="M720 240 L720 278" stroke="#2563eb" stroke-width="3" fill="none" marker-end="url(#arrow)" />
 
-  <rect x="1045" y="184" width="290" height="74" rx="12" fill="#dcfce7" stroke="#22c55e" stroke-width="2" />
-  <text x="1190" y="216" text-anchor="middle" class="h">ECS Fargate cluster</text>
-  <text x="1190" y="240" text-anchor="middle" class="t">shared by all tasks</text>
+  <!-- STEP 1: SHARED PLATFORM -->
+  <rect x="70" y="268" width="380" height="32" rx="8" fill="#0f172a" />
+  <text x="90" y="290" class="step">SHARED PLATFORM (one per environment)</text>
 
-  <path d="M720 280 L720 332" stroke="#2563eb" stroke-width="3" fill="none" marker-end="url(#arrow)" />
+  <rect x="70" y="312" width="1300" height="148" rx="14" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="2" />
 
-  <!-- PER-SERVICE LANES -->
-  <rect x="70" y="320" width="560" height="34" rx="8" fill="#0f172a" />
-  <text x="90" y="343" class="step">Per-service tasks - independent recurrence</text>
+  <rect x="92" y="332" width="200" height="108" rx="10" fill="#e0f2fe" stroke="#0284c7" stroke-width="2" />
+  <text x="192" y="358" text-anchor="middle" class="h">ECR</text>
+  <text x="192" y="378" text-anchor="middle" class="t">{project}/scanners</text>
+  <text x="192" y="398" text-anchor="middle" class="t">tag per module: route53</text>
+  <text x="192" y="418" text-anchor="middle" class="t">lifecycle policy</text>
 
-  <rect x="70" y="366" width="1300" height="500" rx="16" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="2" />
+  <rect x="308" y="332" width="200" height="108" rx="10" fill="#dcfce7" stroke="#22c55e" stroke-width="2" />
+  <text x="408" y="358" text-anchor="middle" class="h">ECS cluster</text>
+  <text x="408" y="378" text-anchor="middle" class="t">Fargate shared</text>
+  <text x="408" y="398" text-anchor="middle" class="t">task def per scanner</text>
+  <text x="408" y="418" text-anchor="middle" class="t">RunTask on-demand</text>
 
-  <text x="285" y="402" text-anchor="middle" class="t" fill="#64748b">EventBridge rule (schedule)</text>
-  <text x="720" y="402" text-anchor="middle" class="t" fill="#64748b">ECS Fargate task (ECR image)</text>
-  <text x="1150" y="402" text-anchor="middle" class="t" fill="#64748b">CloudWatch</text>
+  <rect x="524" y="332" width="200" height="108" rx="10" fill="#fff7ed" stroke="#f59e0b" stroke-width="2" />
+  <text x="624" y="358" text-anchor="middle" class="h">S3 findings</text>
+  <text x="624" y="378" text-anchor="middle" class="t">tf-{env}-{project}-findings</text>
+  <text x="624" y="398" text-anchor="middle" class="t">versioning + encryption</text>
+  <text x="624" y="418" text-anchor="middle" class="t">findings/{scanner}/*.json</text>
 
-  <!-- Lane 1: route53 daily -->
-  <rect x="100" y="420" width="370" height="110" rx="12" fill="#ffffff" stroke="#2563eb" stroke-width="2.5" />
-  <text x="124" y="456" class="lane">route53</text>
-  <rect x="124" y="470" width="210" height="34" rx="17" fill="#dcfce7" stroke="#22c55e" stroke-width="1.5" />
-  <text x="229" y="492" text-anchor="middle" class="chip">DAILY: rate(1 day)</text>
+  <rect x="740" y="332" width="200" height="108" rx="10" fill="#fce7f3" stroke="#db2777" stroke-width="2" />
+  <text x="840" y="358" text-anchor="middle" class="h">SNS + email</text>
+  <text x="840" y="378" text-anchor="middle" class="t">tf-{env}-{project}-alarms</text>
+  <text x="840" y="398" text-anchor="middle" class="t">alarm_notification_emails</text>
+  <text x="840" y="418" text-anchor="middle" class="t">EventBridge + CW alarms</text>
 
-  <rect x="535" y="420" width="370" height="110" rx="12" fill="#ffffff" stroke="#64748b" stroke-width="2" />
-  <text x="559" y="456" class="h">ECS task: route53</text>
-  <text x="559" y="486" class="t">image: ECR/route53, --source aws</text>
-  <text x="559" y="510" class="t">boto3 + task IAM role</text>
+  <rect x="956" y="332" width="200" height="108" rx="10" fill="#fef3c7" stroke="#f59e0b" stroke-width="2" />
+  <text x="1056" y="358" text-anchor="middle" class="h">IAM</text>
+  <text x="1056" y="378" text-anchor="middle" class="t">task execution role</text>
+  <text x="1056" y="398" text-anchor="middle" class="t">task role (AWS API)</text>
+  <text x="1056" y="418" text-anchor="middle" class="t">EventBridge invoke ECS</text>
 
-  <rect x="970" y="420" width="340" height="110" rx="12" fill="#ffffff" stroke="#64748b" stroke-width="2" />
-  <text x="994" y="456" class="h">CloudWatch</text>
-  <text x="994" y="486" class="t">log group + alarm</text>
-  <text x="994" y="510" class="t">FailedInvocations</text>
+  <rect x="1172" y="332" width="180" height="108" rx="10" fill="#f8fafc" stroke="#64748b" stroke-width="2" />
+  <text x="1262" y="358" text-anchor="middle" class="h">Network</text>
+  <text x="1262" y="378" text-anchor="middle" class="t">VPC / subnets</text>
+  <text x="1262" y="398" text-anchor="middle" class="t">security group</text>
+  <text x="1262" y="418" text-anchor="middle" class="t">assign_public_ip</text>
 
-  <path d="M470 475 L535 475" stroke="#2563eb" stroke-width="3" fill="none" marker-end="url(#arrow)" />
-  <path d="M905 475 L970 475" stroke="#2563eb" stroke-width="3" fill="none" marker-end="url(#arrow)" />
+  <path d="M720 460 L720 498" stroke="#2563eb" stroke-width="3" fill="none" marker-end="url(#arrow)" />
 
-  <!-- Lane 2: rds weekly -->
-  <rect x="100" y="556" width="370" height="110" rx="12" fill="#ffffff" stroke="#2563eb" stroke-width="2.5" />
-  <text x="124" y="592" class="lane">rds</text>
-  <rect x="124" y="606" width="230" height="34" rx="17" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5" />
-  <text x="239" y="628" text-anchor="middle" class="chip">WEEKLY: rate(7 days)</text>
+  <!-- STEP 2: PER-SCANNER RUNTIME -->
+  <rect x="70" y="488" width="420" height="32" rx="8" fill="#0f172a" />
+  <text x="90" y="510" class="step">PER SCANNER - created per scanner_jobs key</text>
 
-  <rect x="535" y="556" width="370" height="110" rx="12" fill="#ffffff" stroke="#64748b" stroke-width="2" />
-  <text x="559" y="592" class="h">ECS task: rds</text>
-  <text x="559" y="622" class="t">image: ECR/rds, --source aws</text>
-  <text x="559" y="646" class="t">boto3 + task IAM role</text>
+  <rect x="70" y="532" width="1300" height="300" rx="14" fill="#ffffff" stroke="#cbd5e1" stroke-width="2" />
 
-  <rect x="970" y="556" width="340" height="110" rx="12" fill="#ffffff" stroke="#64748b" stroke-width="2" />
-  <text x="994" y="592" class="h">CloudWatch</text>
-  <text x="994" y="622" class="t">log group + alarm</text>
-  <text x="994" y="646" class="t">FailedInvocations</text>
+  <text x="285" y="562" text-anchor="middle" class="muted">Trigger</text>
+  <text x="620" y="562" text-anchor="middle" class="muted">ECS Fargate task</text>
+  <text x="980" y="562" text-anchor="middle" class="muted">Observability + outputs</text>
 
-  <path d="M470 611 L535 611" stroke="#2563eb" stroke-width="3" fill="none" marker-end="url(#arrow)" />
-  <path d="M905 611 L970 611" stroke="#2563eb" stroke-width="3" fill="none" marker-end="url(#arrow)" />
+  <!-- route53 active lane -->
+  <rect x="96" y="580" width="360" height="128" rx="12" fill="#ffffff" stroke="#2563eb" stroke-width="2.5" />
+  <text x="120" y="612" class="lane">route53</text>
+  <rect x="120" y="624" width="200" height="30" rx="15" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.5" />
+  <text x="220" y="644" text-anchor="middle" class="chip">EventBridge schedule</text>
+  <text x="120" y="678" class="t">enabled=true in scanner_jobs</text>
+  <text x="120" y="698" class="t">or RunTask (scanners-ops / CLI)</text>
 
-  <!-- Lane 3: next service monthly -->
-  <rect x="100" y="692" width="370" height="110" rx="12" fill="#ffffff" stroke="#94a3b8" stroke-width="2.5" stroke-dasharray="8 6" />
-  <text x="124" y="728" class="lane" fill="#64748b">&lt;next service&gt;</text>
-  <rect x="124" y="742" width="250" height="34" rx="17" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.5" />
-  <text x="249" y="764" text-anchor="middle" class="chip" fill="#4c1d95">MONTHLY: cron(...)</text>
+  <rect x="490" y="580" width="360" height="128" rx="12" fill="#ffffff" stroke="#64748b" stroke-width="2" />
+  <text x="514" y="612" class="h">ECS task: route53</text>
+  <text x="514" y="636" class="t">image: ECR:route53</text>
+  <text x="514" y="656" class="t">command: scan_route53.py --source aws</text>
+  <text x="514" y="676" class="t">env: FINDINGS_S3_BUCKET, FINDINGS_S3_PREFIX</text>
+  <text x="514" y="696" class="t">IAM task role - boto3 discovery</text>
 
-  <rect x="535" y="692" width="370" height="110" rx="12" fill="#ffffff" stroke="#94a3b8" stroke-width="2" stroke-dasharray="8 6" />
-  <text x="559" y="728" class="h" fill="#64748b">ECS task: &lt;service&gt;</text>
-  <text x="559" y="758" class="t" fill="#64748b">image: ECR/&lt;service&gt;</text>
-  <text x="559" y="782" class="t" fill="#64748b">added via scanner_jobs</text>
+  <rect x="884" y="580" width="460" height="128" rx="12" fill="#ffffff" stroke="#64748b" stroke-width="2" />
+  <text x="908" y="612" class="h">CloudWatch</text>
+  <text x="908" y="636" class="t">log group /ecs/{prefix}/route53</text>
+  <text x="908" y="656" class="t">alarm: FailedInvocations -&gt; SNS</text>
+  <rect x="908" y="668" width="200" height="28" rx="8" fill="#fff7ed" stroke="#f59e0b" stroke-width="1.5" />
+  <text x="1008" y="686" text-anchor="middle" class="chip">S3 findings JSON upload</text>
 
-  <rect x="970" y="692" width="340" height="110" rx="12" fill="#ffffff" stroke="#94a3b8" stroke-width="2" stroke-dasharray="8 6" />
-  <text x="994" y="728" class="h" fill="#64748b">CloudWatch</text>
-  <text x="994" y="758" class="t" fill="#64748b">log group + alarm</text>
-  <text x="994" y="782" class="t" fill="#64748b">created automatically</text>
+  <path d="M456 644 L490 644" stroke="#2563eb" stroke-width="3" fill="none" marker-end="url(#arrow)" />
+  <path d="M850 644 L884 644" stroke="#2563eb" stroke-width="3" fill="none" marker-end="url(#arrow)" />
+  <path d="M1110 708 L1110 760 L840 760" stroke="#16a34a" stroke-width="2.5" fill="none" marker-end="url(#arrow-green)" />
+  <text x="1120" y="738" class="t" fill="#16a34a">findings</text>
 
-  <path d="M470 747 L535 747" stroke="#94a3b8" stroke-width="3" fill="none" marker-end="url(#arrow)" />
-  <path d="M905 747 L970 747" stroke="#94a3b8" stroke-width="3" fill="none" marker-end="url(#arrow)" />
+  <!-- future scanner lane -->
+  <rect x="96" y="728" width="360" height="88" rx="12" fill="#ffffff" stroke="#94a3b8" stroke-width="2" stroke-dasharray="8 6" />
+  <text x="120" y="758" class="lane" fill="#64748b">&lt;next scanner&gt;</text>
+  <text x="120" y="782" class="t" fill="#64748b">+ scanner_jobs entry + _template</text>
+  <text x="120" y="802" class="t" fill="#64748b">own schedule, tag, command</text>
 
-  <!-- footer note -->
-  <rect x="70" y="900" width="1300" height="44" rx="10" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.5" />
-  <text x="720" y="927" text-anchor="middle" class="note">Each scanner_jobs entry sets its own schedule_expression: add a service and its cadence (daily/weekly/monthly) without touching the others</text>
+  <rect x="490" y="728" width="360" height="88" rx="12" fill="#ffffff" stroke="#94a3b8" stroke-width="2" stroke-dasharray="8 6" />
+  <text x="514" y="758" class="h" fill="#64748b">ECS task: &lt;scanner&gt;</text>
+  <text x="514" y="782" class="t" fill="#64748b">auto-created by for_each</text>
+  <text x="514" y="802" class="t" fill="#64748b">no change to shared platform</text>
+
+  <rect x="884" y="728" width="460" height="88" rx="12" fill="#ffffff" stroke="#94a3b8" stroke-width="2" stroke-dasharray="8 6" />
+  <text x="908" y="758" class="h" fill="#64748b">logs + alarm + completion rule</text>
+  <text x="908" y="782" class="t" fill="#64748b">same pattern per module</text>
+
+  <path d="M456 772 L490 772" stroke="#94a3b8" stroke-width="2.5" fill="none" marker-end="url(#arrow-muted)" />
+  <path d="M850 772 L884 772" stroke="#94a3b8" stroke-width="2.5" fill="none" marker-end="url(#arrow-muted)" />
+
+  <path d="M720 832 L720 870" stroke="#2563eb" stroke-width="3" fill="none" marker-end="url(#arrow)" />
+
+  <!-- STEP 3: SNS NOTIFICATIONS -->
+  <rect x="70" y="860" width="340" height="32" rx="8" fill="#0f172a" />
+  <text x="90" y="882" class="step">SNS NOTIFICATIONS (email)</text>
+
+  <rect x="70" y="904" width="1300" height="160" rx="14" fill="#fdf2f8" stroke="#f9a8d4" stroke-width="2" />
+
+  <rect x="96" y="928" width="380" height="112" rx="10" fill="#ffffff" stroke="#db2777" stroke-width="2" />
+  <text x="286" y="956" text-anchor="middle" class="h">Task completed</text>
+  <text x="286" y="978" text-anchor="middle" class="t">EventBridge: ECS Task State Change</text>
+  <text x="286" y="998" text-anchor="middle" class="t">per-scanner rule (EssentialContainerExited)</text>
+  <text x="286" y="1018" text-anchor="middle" class="t">exit code in email (0 = success)</text>
+
+  <rect x="500" y="928" width="380" height="112" rx="10" fill="#ffffff" stroke="#db2777" stroke-width="2" />
+  <text x="690" y="956" text-anchor="middle" class="h">Task failed to start</text>
+  <text x="690" y="978" text-anchor="middle" class="t">EventBridge: TaskFailedToStart</text>
+  <text x="690" y="998" text-anchor="middle" class="t">image pull, resources, network</text>
+  <text x="690" y="1018" text-anchor="middle" class="t">cluster-wide rule</text>
+
+  <rect x="904" y="928" width="440" height="112" rx="10" fill="#ffffff" stroke="#db2777" stroke-width="2" />
+  <text x="1124" y="956" text-anchor="middle" class="h">Schedule / invoke failure</text>
+  <text x="1124" y="978" text-anchor="middle" class="t">CloudWatch alarm: FailedInvocations</text>
+  <text x="1124" y="998" text-anchor="middle" class="t">per EventBridge rule</text>
+  <text x="1124" y="1018" text-anchor="middle" class="t">alarm_actions -&gt; SNS topic</text>
+
+  <path d="M476 984 L500 984" stroke="#db2777" stroke-width="2" fill="none" />
+  <path d="M880 984 L904 984" stroke="#db2777" stroke-width="2" fill="none" />
+
+  <rect x="530" y="1056" width="380" height="44" rx="10" fill="#fce7f3" stroke="#db2777" stroke-width="2" />
+  <text x="720" y="1084" text-anchor="middle" class="h">SNS topic: tf-{env}-{project}-alarms</text>
+
+  <path d="M286 1040 L286 1056 L530 1078" stroke="#db2777" stroke-width="2" fill="none" marker-end="url(#arrow)" />
+  <path d="M690 1040 L690 1078" stroke="#db2777" stroke-width="2" fill="none" marker-end="url(#arrow)" />
+  <path d="M1124 1040 L1124 1056 L910 1078" stroke="#db2777" stroke-width="2" fill="none" marker-end="url(#arrow)" />
+
+  <path d="M720 1100 L720 1138" stroke="#2563eb" stroke-width="3" fill="none" marker-end="url(#arrow)" />
+
+  <!-- STEP 4: STATE + CI -->
+  <rect x="70" y="1128" width="280" height="32" rx="8" fill="#0f172a" />
+  <text x="90" y="1150" class="step">OPS + GROWTH</text>
+
+  <rect x="70" y="1172" width="1300" height="72" rx="14" fill="#eff6ff" stroke="#bfdbfe" stroke-width="2" />
+
+  <rect x="96" y="1188" width="300" height="44" rx="8" fill="#ffffff" stroke="#64748b" stroke-width="1.5" />
+  <text x="246" y="1210" text-anchor="middle" class="h">S3 remote state</text>
+  <text x="246" y="1226" text-anchor="middle" class="t">use_lockfile per environment</text>
+
+  <rect x="416" y="1188" width="300" height="44" rx="8" fill="#ffffff" stroke="#64748b" stroke-width="1.5" />
+  <text x="566" y="1210" text-anchor="middle" class="h">Azure DevOps</text>
+  <text x="566" y="1226" text-anchor="middle" class="t">scanners-build / scanners-ops / infrastructure</text>
+
+  <rect x="736" y="1188" width="300" height="44" rx="8" fill="#ffffff" stroke="#64748b" stroke-width="1.5" />
+  <text x="886" y="1210" text-anchor="middle" class="h">On-demand</text>
+  <text x="886" y="1226" text-anchor="middle" class="t">ecs run-task reuses task definition</text>
+
+  <rect x="1056" y="1188" width="300" height="44" rx="8" fill="#ffffff" stroke="#2563eb" stroke-width="2" />
+  <text x="1206" y="1210" text-anchor="middle" class="h">Scale out</text>
+  <text x="1206" y="1226" text-anchor="middle" class="t">scanner_jobs + _template + IAM</text>
+
+  <rect x="70" y="1258" width="1300" height="44" rx="10" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.5" />
+  <text x="720" y="1285" text-anchor="middle" class="note">Growth model: one scanner_jobs entry = task def + schedule + logs + alarms + SNS completion rule. Shared ECR, cluster, S3, SNS, IAM stay unchanged.</text>
 </svg>

@@ -1,0 +1,26 @@
+aws_region   = "sa-east-1"
+project_name = "security-scan"
+environment  = "qa"
+
+project_tag = "security-monitoring"
+
+assign_public_ip = true
+
+alarm_notification_emails = [
+  "security-team@example.com",
+  "oncall@example.com",
+]
+
+scanner_jobs = {
+  route53 = {
+    schedule_expression = "rate(1 day)"
+    cpu                 = 256
+    memory              = 512
+    command             = ["python", "route53/scan_route53.py", "--source", "aws"]
+    enabled             = true
+  }
+}
+
+tags = {
+  Team = "security"
+}

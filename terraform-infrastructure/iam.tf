@@ -1,6 +1,3 @@
-# IAM: roles and policies for ECS tasks and for EventBridge to invoke them.
-# --- ECS task roles ---
-
 data "aws_iam_policy_document" "ecs_task_assume_role" {
   statement {
     actions = ["sts:AssumeRole"]
@@ -31,20 +28,21 @@ resource "aws_iam_role" "ecs_task" {
 
 data "aws_iam_policy_document" "ecs_task_permissions" {
   statement {
-    sid = "AllowRDSReadOnlyDiscovery"
+    sid = "AllowRoute53ReadOnlyDiscovery"
     actions = [
-      "rds:DescribeDBClusters",
-      "rds:DescribeDBInstances"
+      "route53:ListHostedZones",
+      "route53:GetDNSSEC",
+      "route53:ListQueryLoggingConfigs",
     ]
     resources = ["*"]
   }
 
   statement {
-    sid = "AllowRoute53ReadOnlyDiscovery"
+    sid = "AllowFindingsUpload"
     actions = [
-      "route53:ListHostedZones"
+      "s3:PutObject"
     ]
-    resources = ["*"]
+    resources = ["${aws_s3_bucket.findings.arn}/*"]
   }
 }
 
@@ -58,8 +56,6 @@ resource "aws_iam_role_policy_attachment" "ecs_task_custom_permissions" {
   role       = aws_iam_role.ecs_task.name
   policy_arn = aws_iam_policy.ecs_task_permissions.arn
 }
-
-# --- EventBridge invoke role ---
 
 data "aws_iam_policy_document" "eventbridge_assume_role" {
   statement {

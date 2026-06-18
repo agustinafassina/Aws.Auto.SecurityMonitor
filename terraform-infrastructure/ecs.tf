@@ -1,4 +1,3 @@
-# ECS: Fargate cluster and one task definition per scanner module.
 resource "aws_ecs_cluster" "scanner" {
   name = "${local.name_prefix}-cluster"
   tags = local.common_tags
@@ -18,7 +17,7 @@ resource "aws_ecs_task_definition" "scanner" {
   container_definitions = jsonencode([
     {
       name      = "${each.key}-scanner"
-      image     = "${aws_ecr_repository.scanner[each.key].repository_url}:${coalesce(each.value.image_tag, var.default_image_tag)}"
+      image     = "${aws_ecr_repository.scanners.repository_url}:${coalesce(each.value.image_tag, each.key)}"
       essential = true
       command   = each.value.command
 
@@ -26,6 +25,14 @@ resource "aws_ecs_task_definition" "scanner" {
         {
           name  = "AWS_REGION"
           value = var.aws_region
+        },
+        {
+          name  = "FINDINGS_S3_BUCKET"
+          value = aws_s3_bucket.findings.id
+        },
+        {
+          name  = "FINDINGS_S3_PREFIX"
+          value = "${var.findings_s3_prefix_base}/${each.key}"
         }
       ]
 

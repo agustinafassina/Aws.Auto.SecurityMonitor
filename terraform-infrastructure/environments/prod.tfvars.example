@@ -1,0 +1,29 @@
+aws_region   = "sa-east-1"
+project_name = "security-scan"
+environment  = "prod"
+
+project_tag = "security-monitoring"
+
+# Prefer explicit VPC/subnets in production.
+# vpc_id     = "vpc-0123456789abcdef0"
+# subnet_ids = ["subnet-aaa", "subnet-bbb"]
+assign_public_ip = false
+
+alarm_notification_emails = [
+  "security-team@example.com",
+  "oncall@example.com",
+]
+
+scanner_jobs = {
+  route53 = {
+    schedule_expression = "rate(1 day)"
+    cpu                 = 256
+    memory              = 512
+    command             = ["python", "route53/scan_route53.py", "--source", "aws"]
+    enabled             = true
+  }
+}
+
+tags = {
+  Team = "security"
+}

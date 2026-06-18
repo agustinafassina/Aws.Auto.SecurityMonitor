@@ -1,4 +1,3 @@
-# Networking: VPC/subnet discovery and the security group used by ECS tasks.
 data "aws_vpc" "default" {
   count   = var.vpc_id == null ? 1 : 0
   default = true
