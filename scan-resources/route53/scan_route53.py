@@ -103,8 +103,12 @@ def _enrich_zone_with_timeout(
     is_private: bool,
     timeout_seconds: int,
 ) -> dict[str, Any]:
-    with ThreadPoolExecutor(max_workers=1) as executor:
-        future = executor.submit(_enrich_zone, client, zone_id, zone_name, is_private)
+    # No `with` block: its __exit__ calls shutdown(wait=True), which would block
+    # until the hung AWS call returns and defeat the timeout. The botocore client
+    # timeouts (see _route53_client) bound how long an abandoned worker can live.
+    executor = ThreadPoolExecutor(max_workers=1)
+    future = executor.submit(_enrich_zone, client, zone_id, zone_name, is_private)
+    try:
         try:
             return future.result(timeout=timeout_seconds)
         except FuturesTimeoutError:
@@ -130,6 +134,28 @@ def _enrich_zone_with_timeout(
                 "query_logging_enabled": False,
                 "discovery_error": str(exc),
             }
+    finally:
+        executor.shutdown(wait=False, cancel_futures=True)
+
+
+def _route53_client(timeout_seconds: int) -> Any:
+    """Route53 client whose own socket timeouts are bounded by the domain timeout.
+
+    Python joins executor worker threads at interpreter exit, so an abandoned
+    call must still finish on its own; these limits make sure it does.
+    """
+    import boto3
+    from botocore.config import Config
+
+    per_call = max(1, timeout_seconds)
+    return boto3.client(
+        "route53",
+        config=Config(
+            connect_timeout=per_call,
+            read_timeout=per_call,
+            retries={"max_attempts": 2, "mode": "standard"},
+        ),
+    )
 
 
 def _list_hosted_zone_stubs(client: Any, max_domains: int) -> list[dict[str, Any]]:
@@ -239,9 +265,7 @@ def run_batch_scan(
 
     client = None
     if enrich_from_aws:
-        import boto3
-
-        client = boto3.client("route53")
+        client = _route53_client(domain_timeout)
         stubs = _list_hosted_zone_stubs(client, MAX_DOMAINS)
         resources = stubs
         logger.info("Listed %s hosted zone(s) from AWS", len(resources))

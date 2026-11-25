@@ -9,6 +9,8 @@ Modular Python scanners for AWS. Every module is a self-contained package under 
 scan-resources/
   scanner_core.py       # shared check engine, load_resources, S3 persist
   requirements.txt      # shared deps (boto3) — every module image installs this
+  requirements-dev.txt  # + pytest (tests/CI only, not shipped in images)
+  tests/                # unit tests for scanner_core and each module
   _template/            # copy to add a module
   <module>/             # one folder per scanner (route53 is the first)
     Dockerfile          # build context = repo root
@@ -60,7 +62,7 @@ python scan-resources/route53/scan_route53.py --source auto
 - Scans **one domain at a time** with logging to stderr.
 - **Pushes each zone** to S3 as it completes (`…/runs/{batch_id}/zones/{zone_id}.json`) and updates a running `summary.json` (no data loss if the task dies mid-run).
 - **Exit code 1** if any domain has `fail` or `error` (ECS task fails → SNS notification).
-- **Timeout** → checks `fail` with `domain discovery timed out after Ns` (not `error`). API discovery errors → `error`.
+- **Timeout** → checks `fail` with `domain discovery timed out after Ns` (not `error`). API discovery errors → `error`. The scan moves on to the next domain right away; the boto3 client's own connect/read timeouts (same value) stop the abandoned call.
 
 ### Docker
 Build context = repo root. CI: [azure-pipelines/scanners-build.yml](../azure-pipelines/scanners-build.yml).
@@ -69,6 +71,16 @@ Build context = repo root. CI: [azure-pipelines/scanners-build.yml](../azure-pip
 docker build -f scan-resources/route53/Dockerfile -t scanners:route53 .
 docker run --rm scanners:route53
 ```
+
+## 🧪 Tests
+Unit tests use a fake boto3 client, so they need no AWS credentials. CI runs them before each module's image build ([module-build-steps.yml](../azure-pipelines/templates/module-build-steps.yml)).
+
+```bash
+pip install -r scan-resources/requirements-dev.txt
+python -m pytest scan-resources/tests -q
+```
+
+A new module adds `tests/test_<module>.py`; load it with the `load_module("<module>")` helper from `tests/conftest.py`.
 
 ## ➕ New module
 Do not duplicate steps here — follow [_template/README.md](_template/README.md).
